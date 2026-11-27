@@ -39,5 +39,6 @@ Deadline: 2 Dec 2026 23:59 UTC = 3 Dec 06:59 WIB.
 - EVM-lane withdrawals are "classical" tier at the tx level — the PQ check
   is inside the contract via the precompile, not the tx signature.
   Labelled honestly wherever it appears.
-- Video is a narrated slideshow of real outputs, not a live screen
-  recording.
+- Video (v2, 86 s) is a real screen recording: the live console, the
+  terminal running the real propose/drill commands, and the attack lab
+  with all 3 attacks clicked live plus both real-key checks.
