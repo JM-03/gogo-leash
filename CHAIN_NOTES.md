@@ -79,3 +79,70 @@ fees). Agent link expires 24 h after the link tx (~28 Nov 18:0x WIB).
 - `node --test agent/`: 13 passed, 0 failed (policy engine + signal scorer).
 - `node agent/leash.mjs propose`: 5 proposals — 3 READY (2.3 QOR), 2 refused
   (unknown sender not allowlisted; 0.9 QOR over daily remainder 0.7 QOR).
+
+## Vault v2 — deployed 28 Nov 2026 ~00:30 WIB
+
+Why v2 (see REDTEAM.md): v1's daily cap was a UTC calendar-day bucket —
+3 QOR at 23:59 plus 3 more at 00:01 slipped through. V2 counts every payment
+in a rolling 24-hour window, and adds a tripwire: 3 rejected withdrawal
+attempts inside 1 hour pauses the vault automatically (watcher,
+`agent/tripwire.mjs`, submits `trip()`; the vault cannot count rejections
+itself because a reverted `withdraw()` rolls its counter back too).
+
+| Step | Tx | Result |
+| --- | --- | --- |
+| Open EVM window (600 blocks, 12 txs) | `864B3364534A17E3CD46C91EC1BA2D901ABA321F5D3662F25E6F1BE3BB4050D3` | window live |
+| Deploy `GogoLeashVaultV2` (3 QOR deposit) | `0x330924e9be043d6649ce750710ab327e3e86098a9e9cf9a505cbbb75ba62d530` | vault `0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f` |
+| Allowlist demo vendor (gas EVM) | `0xf5d7a2c5e03a59b2c1d88d49ae4fd6a7000272341163ca89380796d0f277be37` | allowlisted |
+| Guardian-signed withdrawal 0.8 QOR | `0xe5e33881dbe9b183505d6b4b31f5d480264a33d9ab5a335b4ab47f8b0b08e45b` | WITHDRAWN, nonce 0 → 1 |
+| Guardian-signed withdrawal 0.5 QOR | `0x1251e86d902c2f903b53f7b6d0451a4f3c488ac309ae0d66458cd0fe4e1db2ed` | WITHDRAWN, nonce 1 → 2 |
+| Guardian-signed withdrawal 1.0 QOR | `0xef20982fbbb18c8ce798f1098f9b0c20975a60a02c572c60329620ff3518d358` | WITHDRAWN, nonce 2 → 3 |
+
+Vault v2 after the payments: 0.7 QOR, nonce 3, spent in rolling window
+2.3 QOR, caps 1 QOR/payment, 3 QOR/rolling 24h, kill switch off, tripwire
+0 trips (3 rejections inside 3600 s trips it). Live tripwire demo (real
+reverted attacks → watcher trips) not yet run on v2.
+
+## Local test evidence, v2 (no chain)
+
+- `forge test`: 25 passed, 0 failed (11 v1 + 14 v2, incl. the
+  midnight-crossing test — cap does NOT reset at midnight — and the
+  window-sliding test, plus tripwire pause/unpause and v1-signature-dead-on-v2).
+- `node --test agent/`: 19 passed, 0 failed (13 policy + signal, 6 tripwire rule).
+
+## Vendor PQ signatures — verified live 28 Nov 2026 ~00:40 WIB
+
+The vendor (gas wallet) signs each invoice with its own ML-DSA-87 key;
+the agent verifies the signature locally AND against the on-chain
+pqcVerify precompile before paying (`agent/vendor-sig.mjs`, wired into
+`agent/leash.mjs pay()` — a proposal carrying `vendorSig` must verify).
+
+- Invoice `INV-2026-11-001`: 0.8 QOR to the vendor, vault v2
+  `0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f`. Signature 4627 bytes.
+- Live verify: VERIFIED (local ML-DSA-87 + on-chain precompile).
+- Tampered signature: REFUSED (local=false, on-chain=false).
+- Same signature, wrong amount (0.5 QOR): REFUSED (local=false, on-chain=false).
+- Agent run 28 Nov ~00:45 WIB (`node agent/leash.mjs run`, link still live
+  until 18:19 WIB): vendor signature INV-2026-11-001 VERIFIED, then PAID
+  0.8 QOR hybrid ML-DSA-87 verified, tx
+  `8F951F54C746B3294D711F7A489B3D1822E3587890AC36416579327FE74080AA`;
+  Domain renewal 0.5 QOR PAID tx
+  `B609E911C31759A81C9B9F9EFDB3C61F1A2E67FC18C23A84872A134A76F9E657`;
+  API credits 1 QOR PAID tx
+  `A92EA3249376F8DC68171BF46B10B6BF04E9C02ADE7BF5F98D8F1EB1CA9E3586`.
+  2 proposals skipped as designed (unknown sender, over daily remainder).
+
+## MCP server — live smoke test 28 Nov 2026 ~00:20 WIB
+
+`agent/mcp-server.mjs` (stdio JSON-RPC, read-only, 5 tools). Against the
+real v2 vault: `vault_status` returned 0.7 QOR / 3 withdrawals / 2.3 QOR
+spent in window / kill switch off; `drill_attack` returned BLOCKED with
+revert `0xf35e1976` (BadPqcSignature).
+
+## Local test evidence, v2 final (no chain)
+
+- `forge test`: 31 passed, 0 failed (11 v1 + 20 v2, incl. a fuzz test:
+  random payment sequences + time jumps can never leave the rolling
+  window holding more than the daily cap).
+- `node --test agent/`: 33 passed, 0 failed (policy + signal 13,
+  tripwire 6, MCP server 10, vendor-sig 4).
