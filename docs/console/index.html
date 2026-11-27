@@ -131,6 +131,7 @@ async function load() {
   h.push('<table><thead><tr><th>Amount</th><th>Transaction</th><th>Result</th></tr></thead><tbody>');
   PAID.forEach(p => h.push(`<tr><td>${p.qor} QOR</td><td><a class="mono" href="${EXPLORER_TX}${p.tx}">0x${short(p.tx, 8)}</a></td><td><span class="pill green">PAID</span></td></tr>`));
   h.push('</tbody></table>');
+  h.push('<p class="muted" style="font-size:.82rem">Explorer links: it opens on Mainnet by default — switch it to Testnet (diana), or the transactions show as "not found".</p>');
   h.push('<p class="muted" style="font-size:.82rem">Two more payments were refused as designed: 5 QOR to a stranger (not allowlisted) and 0.9 QOR over the daily remainder.</p>');
   h.push('</section>');
   h.push('<section><h2>Q-Day drill</h2>');
