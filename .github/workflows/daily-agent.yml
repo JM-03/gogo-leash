@@ -21,7 +21,7 @@ jobs:
   agent:
     runs-on: ubuntu-latest
     env:
-      VAULT_ADDRESS: 0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f
+      VAULT_ADDRESS: "0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f" # quoted: YAML reads a bare 0x... value as an int and rejects it
     steps:
       - uses: actions/checkout@v4
 
