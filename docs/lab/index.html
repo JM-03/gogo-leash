@@ -94,10 +94,11 @@
     <div class="vs">VS</div>
     <div class="card attack">
       <div class="who">⚔&nbsp; The attacker — you</div>
-      <h2>Steal 0.5 QOR with a forged signature</h2>
-      <p>Your browser builds the exact transaction an attacker would send: a <code>withdraw</code> of 0.5 QOR to <code>0x0d95…24FD</code>, signed with a <b>randomly generated</b> ML-DSA-87 key instead of the guardian's. It runs as a read-only <code>eth_call</code> against the public testnet RPC.</p>
-      <button id="attack" class="attack-btn">⚔&nbsp; Attack: steal 0.5 QOR</button>
-      <button id="reset" class="secondary">Reset</button>
+      <h2>Try to drain the vault</h2>
+      <p>Pick an attack. Your browser builds the exact transaction an attacker would send and runs it as a read-only <code>eth_call</code> against the public testnet RPC — no wallet, no gas, nothing is sent. Every click forges a fresh random signature, so no two attempts are ever identical.</p>
+      <button id="attack-1" class="attack-btn">⚔ Attack 1: forged signature — steal 0.5 QOR</button>
+      <button id="attack-2" class="attack-btn">⚔ Attack 2: unapproved payee — pay a stranger</button>
+      <button id="attack-3" class="attack-btn">⚔ Attack 3: over the cap — withdraw 2 QOR</button>
       <div id="result" class="result"></div>
     </div>
     <div class="card guardian">
@@ -106,6 +107,7 @@
       <p>A vault that rejects everything proves nothing. Here is the other side: the guardian's registered ML-DSA-87 key (2,592 bytes, read live from the chain) and the payment it actually made.</p>
       <button id="verify-sig" class="guardian-btn">✓ Check the real signature</button>
       <button id="verify-pay" class="guardian-btn">✓ Check the real payment</button>
+      <p class="muted" style="margin:.55rem 0 0">The attacks prove the vault says NO to fakes. These two checks prove it says YES to the real key — without them, BLOCKED could just mean the vault is broken.</p>
       <div id="verify-sig-result" class="result"></div>
       <div id="verify-pay-result" class="result"></div>
     </div>
@@ -200,26 +202,36 @@ async function loadVault() {
   }
 }
 
-document.getElementById('attack').addEventListener('click', async () => {
-  const btn = document.getElementById('attack');
+const STRANGER = '0x1111111111111111111111111111111111111111';
+const ATTACKS = {
+  1: { label: 'forged signature', to: VICTIM, amount: QOR / 2n, expect: BAD_SIG, expectName: 'BadPqcSignature()', call: 'withdraw(0.5 QOR → 0x0d95…24FD)', why: 'The signature is not the guardian\u2019s registered ML-DSA-87 key, so the pqcVerify precompile said no. A real ML-DSA-87 signature from the guardian\u2019s key is the only thing that verifies — and that key never leaves the guardian.' },
+  2: { label: 'unapproved payee', to: STRANGER, amount: QOR / 2n, expect: '6f7a5275', expectName: 'NotAllowlisted(address)', call: 'withdraw(0.5 QOR → 0x1111…1111)', why: '0x1111…1111 was never allowlisted by the guardian. The vault checks the allowlist before it even looks at the signature — a stranger gets nothing, whatever key signs.' },
+  3: { label: 'over the per-payment cap', to: VICTIM, amount: 2n * QOR, expect: 'c8c92ec8', expectName: 'OverPerTxCap(uint256,uint256)', call: 'withdraw(2 QOR → 0x0d95…24FD)', why: 'The per-payment cap is 1 QOR and 2 QOR is over it. The vault refuses before checking the signature — no single payment can ever exceed the cap.' },
+};
+let attackCount = 0;
+async function runAttack(id) {
+  const a = ATTACKS[id];
   const res = document.getElementById('result');
-  btn.disabled = true;
-  res.className = 'result'; res.innerHTML = '<p>Forging a signature with a random ML-DSA-87 key and asking the chain…</p>';
+  document.querySelectorAll('.attack-btn').forEach(b => b.disabled = true);
+  attackCount += 1;
+  const n = attackCount;
+  res.className = 'result'; res.innerHTML = `<p>Attack #${n} (${a.label}): forging a fresh random signature and asking the chain…</p>`;
   try {
     const sig = new Uint8Array(4627); // ML-DSA-87 signature length
     crypto.getRandomValues(sig);
-    const data = buildWithdrawCalldata(VICTIM, QOR / 2n, sig);
+    const fp = '0x' + toHex(sig.slice(0, 8)) + '…' + toHex(sig.slice(-4));
+    const data = buildWithdrawCalldata(a.to, a.amount, sig);
     const j = await rpc('eth_call', [{ to: VAULT, data }, 'latest']);
     if (j.error) {
       const data0 = (j.error.data || '').toLowerCase();
-      const isBadSig = data0.includes(BAD_SIG);
-      res.className = 'result ' + (isBadSig ? 'blocked' : 'error');
-      res.innerHTML = `<h3>${isBadSig ? '⛔ BLOCKED — the vault refused the attack' : 'Reverted (unexpected reason)'}</h3>
-        <p>The chain answered the exact call an attacker would send:</p>
-        <pre>eth_call withdraw(0.5 QOR → ${VICTIM})
+      const hit = data0.includes(a.expect);
+      res.className = 'result ' + (hit ? 'blocked' : 'error');
+      res.innerHTML = `<h3>${hit ? '⛔ BLOCKED — the vault refused attack #' + n : 'Reverted (unexpected reason)'}</h3>
+        <p>Attack #${n}: <b>${a.label}</b> — the chain answered the exact call an attacker would send:</p>
+        <pre>eth_call ${a.call}
 revert data: ${j.error.data || j.error.message}
-${isBadSig ? 'decoded: BadPqcSignature() — the signature is not the guardian\u2019s registered ML-DSA-87 key, so the pqcVerify precompile said no.' : ''}</pre>
-        <p>The forged signature was 4,627 random bytes. A real ML-DSA-87 signature from the guardian's key is the only thing that verifies — and that key never leaves the guardian. The most a stolen classical key can ever take from this vault is <b>0 QOR</b>.</p>
+${hit ? 'decoded: ' + a.expectName + ' — ' + a.why : ''}</pre>
+        <p class="muted">Forged key fingerprint this attempt: <code>${fp}</code> — a fresh random key every click, so no two attempts are the same. The most a stolen classical key can ever take from this vault is <b>0 QOR</b>.</p>
         <p class="muted">Calldata (first 200 chars): <code>${data.slice(0, 200)}…</code> — ${data.length - 2} hex chars total. Nothing was sent: this was a read-only simulation.</p>`;
     } else {
       res.className = 'result error';
@@ -229,8 +241,11 @@ ${isBadSig ? 'decoded: BadPqcSignature() — the signature is not the guardian\u
     res.className = 'result error';
     res.innerHTML = `<h3>Could not reach the chain</h3><p>${e.message}</p>`;
   }
-  btn.disabled = false;
-});
+  document.querySelectorAll('.attack-btn').forEach(b => b.disabled = false);
+}
+document.getElementById('attack-1').addEventListener('click', () => runAttack(1));
+document.getElementById('attack-2').addEventListener('click', () => runAttack(2));
+document.getElementById('attack-3').addEventListener('click', () => runAttack(3));
 
 document.getElementById('verify-sig').addEventListener('click', async () => {
   const btn = document.getElementById('verify-sig');
@@ -278,12 +293,6 @@ document.getElementById('verify-pay').addEventListener('click', async () => {
   btn.disabled = false;
 });
 
-document.getElementById('reset').addEventListener('click', () => {
-  for (const id of ['result', 'verify-sig-result', 'verify-pay-result']) {
-    const el = document.getElementById(id);
-    el.className = 'result'; el.innerHTML = '';
-  }
-});
 loadVault();
 </script>
 </body>
