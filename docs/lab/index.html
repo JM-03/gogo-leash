@@ -24,9 +24,11 @@
   button.secondary { background:var(--panel); color:var(--text); border:1px solid var(--line); }
   .result { border-radius:10px; padding:1rem 1.1rem; margin-top:1rem; display:none; }
   .result.blocked { display:block; background:rgba(63,185,80,.08); border:1px solid var(--green); }
+  .result.ok { display:block; background:rgba(63,185,80,.08); border:1px solid var(--green); }
   .result.error { display:block; background:rgba(248,81,73,.08); border:1px solid var(--red); }
   .result h3 { margin:0 0 .3rem; font-size:1.05rem; }
   .result.blocked h3 { color:var(--green); }
+  .result.ok h3 { color:var(--green); }
   .result.error h3 { color:var(--red); }
   .muted { color:var(--muted); }
   .row { display:flex; justify-content:space-between; gap:1rem; padding:.42rem 0; border-bottom:1px solid var(--line); font-size:.92rem; }
@@ -52,6 +54,16 @@
   <section>
     <h2>Vault state — live</h2>
     <div id="vault">Loading…</div>
+  </section>
+
+  <section>
+    <h2>The comparison — when the signature is real</h2>
+    <p>A vault that rejects everything proves nothing. Here is the other side, live from the chain — no wallet, no gas, nothing is sent:</p>
+    <p><button id="verify-sig" style="background:var(--green);color:#04140a">✓ Check the real signature</button>
+    <button id="verify-pay" class="secondary" style="margin-left:.5rem">✓ Check the real payment</button></p>
+    <div id="verify-sig-result" class="result"></div>
+    <div id="verify-pay-result" class="result"></div>
+    <p class="muted">Why is there no "pay for real" button? A live payment needs a fresh, valid signature — and if it were printed on this page, anyone could submit it and drain the vault. So the "it pays" side is proven with the signature the guardian already used (verified above) and the receipt of the payment it made (checked above).</p>
   </section>
 
   <section>
@@ -144,6 +156,77 @@ ${isBadSig ? 'decoded: BadPqcSignature() — the signature is not the guardian\u
   }
   btn.disabled = false;
 });
+const PQC_VERIFY = '0x0000000000000000000000000000000000000a01';
+const PQC_KEYS = '0x0000000000000000000000000000000000000a02';
+const GUARDIAN = '0x7976B342501928c2b5E8f9cd70f596bfF19555f9';
+const REAL_TX = '0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea'; // first real withdrawal, nonce 0
+const REAL_TX2 = '0xc45070e7a9081c30653d6558cb689f133e6b6126e90bbe8702e9d6878fb04ab4'; // second real withdrawal
+const PQC_VERIFY_SEL = 'f52bde0a';     // pqcVerify(bytes,bytes,bytes)
+const PQC_KEY_STATUS_SEL = '850dfe51'; // pqcKeyStatus(address)
+const WITHDRAW_MSG_SEL = 'd7489fa6';   // withdrawalMessage(address,uint256,uint256)
+
+function encodeBytesArgs(parts) {
+  const headLen = 32 * parts.length;
+  let head = '', tail = '', off = headLen;
+  for (const p of parts) {
+    head += hex(BigInt(off));
+    tail += hex(BigInt(p.length / 2)) + p + '0'.repeat(((32 - (p.length / 2 % 32)) % 32) * 2);
+    off += 32 + Math.ceil(p.length / 2 / 32) * 32;
+  }
+  return head + tail;
+}
+function decodeBytesAt(h, wordIndex) {
+  const off = parseInt(h.slice(wordIndex * 64, wordIndex * 64 + 64), 16);
+  const len = parseInt(h.slice(off * 2, off * 2 + 64), 16);
+  return h.slice(off * 2 + 64, off * 2 + 64 + len * 2);
+}
+
+document.getElementById('verify-sig').addEventListener('click', async () => {
+  const btn = document.getElementById('verify-sig');
+  const res = document.getElementById('verify-sig-result');
+  btn.disabled = true;
+  res.className = 'result'; res.innerHTML = '<p>Asking the chain to verify the guardian\u2019s real signature…</p>';
+  try {
+    const ks = await rpc('eth_call', [{ to: PQC_KEYS, data: '0x' + PQC_KEY_STATUS_SEL + GUARDIAN.slice(2).toLowerCase().padStart(64, '0') }, 'latest']);
+    const pubkey = decodeBytesAt(ks.result.slice(2), 2);
+    const msg = await rpc('eth_call', [{ to: VAULT, data: '0x' + WITHDRAW_MSG_SEL + VICTIM.slice(2).toLowerCase().padStart(64, '0') + hex(QOR / 2n) + hex(0n) }, 'latest']);
+    const message = decodeBytesAt(msg.result.slice(2), 0);
+    const tx = await rpc('eth_getTransactionByHash', [REAL_TX]);
+    const input = tx.result.input.slice(2);
+    const sig = input.slice(8 + 64 * 4, 8 + 64 * 4 + 9254);
+    const v = await rpc('eth_call', [{ to: PQC_VERIFY, data: '0x' + PQC_VERIFY_SEL + encodeBytesArgs([pubkey, sig, message]) }, 'latest']);
+    const ok = BigInt(v.result) === 1n;
+    res.className = 'result ' + (ok ? 'ok' : 'error');
+    res.innerHTML = `<h3>${ok ? '✅ VERIFIED — this signature is the guardian\u2019s' : '❌ NOT verified'}</h3>
+      <p>The <code>pqcVerify</code> precompile checked the guardian's registered ML-DSA-87 key (2,592 bytes, read live from the chain) against the signature from the real withdrawal <a href="https://explore.qore.network/tx/${REAL_TX}">${REAL_TX.slice(0, 12)}…</a> and the message it signed (0.5 QOR to ${VICTIM.slice(0, 8)}…, nonce 0). Answer: <b>${ok ? 'valid' : 'invalid'}</b>.</p>
+      <p class="muted">Same precompile, same message — the only difference from the attack above is whose key signed it. A random key says no; the guardian's key says yes.</p>`;
+  } catch (e) {
+    res.className = 'result error';
+    res.innerHTML = `<h3>Could not reach the chain</h3><p>${e.message}</p>`;
+  }
+  btn.disabled = false;
+});
+
+document.getElementById('verify-pay').addEventListener('click', async () => {
+  const btn = document.getElementById('verify-pay');
+  const res = document.getElementById('verify-pay-result');
+  btn.disabled = true;
+  res.className = 'result'; res.innerHTML = '<p>Asking the chain for the receipt of the real payment…</p>';
+  try {
+    const rc = await rpc('eth_getTransactionReceipt', [REAL_TX2]);
+    const ok = rc.result && rc.result.status === '0x1';
+    const block = rc.result ? parseInt(rc.result.blockNumber, 16).toLocaleString() : '—';
+    res.className = 'result ' + (ok ? 'ok' : 'error');
+    res.innerHTML = `<h3>${ok ? '✅ PAID — the chain accepted it' : '❌ Not successful'}</h3>
+      <p>Receipt of <a href="https://explore.qore.network/tx/${REAL_TX2}">${REAL_TX2.slice(0, 12)}…</a>: status <b>${ok ? 'success (0x1)' : rc.result.status}</b>, block ${block}. The vault paid 0.5 QOR to the allowlisted vendor — the same function, the same vault, a real signature.</p>
+      <p class="muted">This is the "does not reject" side: same <code>withdraw</code>, real ML-DSA-87 signature, money moved.</p>`;
+  } catch (e) {
+    res.className = 'result error';
+    res.innerHTML = `<h3>Could not reach the chain</h3><p>${e.message}</p>`;
+  }
+  btn.disabled = false;
+});
+
 document.getElementById('reset').addEventListener('click', () => {
   const res = document.getElementById('result');
   res.className = 'result'; res.innerHTML = '';
