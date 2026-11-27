@@ -1,0 +1,9 @@
+node_modules/
+out/
+lib/
+.env
+agent/audit.jsonl
+agent/.keys/
+*.log
+.DS_Store
+cache/
