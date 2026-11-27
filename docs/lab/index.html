@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gogo Leash — attack lab</title>
+<style>
+  :root { --bg:#0b0f14; --panel:#121822; --line:#223042; --text:#e6edf3; --muted:#8b98a9; --green:#3fb950; --red:#f85149; --blue:#58a6ff; --violet:#bc8cff; --amber:#d29922; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  .wrap { max-width:820px; margin:0 auto; padding:1.5rem 1rem 3rem; }
+  h1 { font-size:1.5rem; margin:0; } h1 span { color:var(--violet); }
+  .sub { color:var(--muted); font-size:.9rem; margin:.4rem 0 1.25rem; }
+  .badge { display:inline-block; font-size:.72rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; padding:.18rem .5rem; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+  .badge.chain { color:var(--blue); border-color:var(--blue); }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:1rem 1.1rem; margin-bottom:1rem; }
+  h2 { font-size:.95rem; margin:0 0 .6rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  p { font-size:.92rem; line-height:1.55; }
+  a { color:var(--blue); text-decoration:none; } a:hover { text-decoration:underline; }
+  code { font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:.85em; background:#0e141d; border:1px solid var(--line); padding:.1rem .35rem; border-radius:5px; }
+  pre { background:#0e141d; border:1px solid var(--line); border-radius:8px; padding:.8rem; overflow-x:auto; font-size:.8rem; line-height:1.5; margin:.6rem 0 0; white-space:pre-wrap; word-break:break-all; }
+  button { font:inherit; font-weight:700; cursor:pointer; border:0; border-radius:8px; padding:.7rem 1.2rem; background:var(--red); color:#fff; }
+  button:disabled { opacity:.55; cursor:wait; }
+  button.secondary { background:var(--panel); color:var(--text); border:1px solid var(--line); }
+  .result { border-radius:10px; padding:1rem 1.1rem; margin-top:1rem; display:none; }
+  .result.blocked { display:block; background:rgba(63,185,80,.08); border:1px solid var(--green); }
+  .result.error { display:block; background:rgba(248,81,73,.08); border:1px solid var(--red); }
+  .result h3 { margin:0 0 .3rem; font-size:1.05rem; }
+  .result.blocked h3 { color:var(--green); }
+  .result.error h3 { color:var(--red); }
+  .muted { color:var(--muted); }
+  .row { display:flex; justify-content:space-between; gap:1rem; padding:.42rem 0; border-bottom:1px solid var(--line); font-size:.92rem; }
+  .row:last-child { border-bottom:0; }
+  .row .k { color:var(--muted); } .row .v { text-align:right; word-break:break-all; }
+  footer { color:var(--muted); font-size:.8rem; margin-top:1.5rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Gogo Leash <span>— attack lab</span></h1>
+  <p class="sub">You stole the guardian's classical key. Try to drain the vault. <span class="badge chain">QoreChain · qorechain-diana · chain 9800</span></p>
+
+  <section>
+    <h2>The setup</h2>
+    <p>The vault at <code>0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4</code> holds QOR and pays only when a withdrawal carries the guardian's <b>ML-DSA-87 post-quantum signature</b>, verified on chain by QoreChain's <code>pqcVerify</code> precompile. The classical (secp256k1) key alone — the one a quantum computer can derive — pays nothing.</p>
+    <p>Below, your browser builds the exact transaction an attacker would send: a <code>withdraw</code> of 0.5 QOR to <code>0x0d95…24FD</code>, signed with a <b>randomly generated</b> ML-DSA-87 key instead of the guardian's. It is executed as a read-only <code>eth_call</code> against the public testnet RPC — <b>no wallet, no gas, no transaction is sent</b>. What the chain answers is what a real attack would get.</p>
+    <button id="attack">⚔&nbsp; Attack: steal 0.5 QOR with a forged signature</button>
+    <button id="reset" class="secondary" style="margin-left:.5rem">Reset</button>
+    <div id="result" class="result"></div>
+  </section>
+
+  <section>
+    <h2>Vault state — live</h2>
+    <div id="vault">Loading…</div>
+  </section>
+
+  <section>
+    <h2>What the real guardian withdrawal looked like</h2>
+    <p>A withdrawal signed with the guardian's real ML-DSA-87 key <b>pays</b>. Same contract, same function — only the signature is different.</p>
+    <div class="row"><span class="k">Real withdrawal, 0.5 QOR</span><span class="v"><a href="https://explore.qore.network/tx/0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea">0x19b2208b…e6fea</a> · PAID</span></div>
+    <div class="row"><span class="k">Second withdrawal, 0.5 QOR</span><span class="v"><a href="https://explore.qore.network/tx/0xc45070e7a9081c30653d6558cb689f133e6b6126e90bbe8702e9d6878fb04ab4">0xc45070e7…b04ab4</a> · PAID</span></div>
+    <div class="row"><span class="k">Agent payments (hybrid ML-DSA-87)</span><span class="v">0.8 / 0.5 / 1.0 QOR — <a href="https://github.com/JM-03/gogo-leash/blob/main/CHAIN_NOTES.md">txs in CHAIN_NOTES.md</a></span></div>
+  </section>
+
+  <footer>
+    <a href="https://github.com/JM-03/gogo-leash">github.com/JM-03/gogo-leash</a> ·
+    <a href="../console/">Live console →</a> ·
+    <a href="https://explore.qore.network">explore.qore.network</a>
+  </footer>
+</div>
+<script>
+const RPC = 'https://evm-testnet.qore.host/';
+const VAULT = '0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4';
+const VICTIM = '0x0d95bE136395430Af3BF55Ea702623608B3524FD';
+const WITHDRAW_SEL = '31f09265'; // withdraw(address,uint256,bytes)
+const BAD_SIG = 'f35e1976';      // BadPqcSignature()
+const QOR = 10n ** 18n;
+
+async function rpc(method, params) {
+  const r = await fetch(RPC, { method:'POST', headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ jsonrpc:'2.0', id:1, method, params }) });
+  return r.json();
+}
+const hex = n => n.toString(16).padStart(64, '0');
+const toHex = bytes => [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
+
+function buildWithdrawCalldata(to, amountWei, sigBytes) {
+  // withdraw(address to, uint256 amount, bytes sig)
+  const addr = to.slice(2).toLowerCase().padStart(64, '0');
+  const amt = hex(amountWei);
+  const sig = toHex(sigBytes);
+  const headLen = 3 * 32; // to, amount, offset
+  const offset = hex(BigInt(headLen));
+  const len = hex(BigInt(sigBytes.length));
+  const padded = sig + '0'.repeat((32 - (sigBytes.length % 32)) % 32);
+  return '0x' + WITHDRAW_SEL + addr + amt + offset + len + padded;
+}
+
+async function loadVault() {
+  try {
+    const [bal, nonce, spent] = await Promise.all([
+      rpc('eth_getBalance', [VAULT, 'latest']),
+      rpc('eth_call', [{ to: VAULT, data: '0xaffed0e0' }, 'latest']),
+      rpc('eth_call', [{ to: VAULT, data: '0xa37d07e9' }, 'latest']),
+    ]);
+    const b = v => (Number(BigInt(v.result)) / 1e18).toLocaleString(undefined, { maximumFractionDigits: 6 });
+    document.getElementById('vault').innerHTML =
+      `<div class="row"><span class="k">Balance</span><span class="v">${b(bal)} QOR</span></div>` +
+      `<div class="row"><span class="k">Withdrawals so far</span><span class="v">${BigInt(nonce.result).toString()}</span></div>` +
+      `<div class="row"><span class="k">Spent today</span><span class="v">${b(spent)} QOR of 3 QOR daily cap</span></div>`;
+  } catch (e) {
+    document.getElementById('vault').innerHTML = `<p class="muted">Could not reach the public RPC: ${e.message}</p>`;
+  }
+}
+
+document.getElementById('attack').addEventListener('click', async () => {
+  const btn = document.getElementById('attack');
+  const res = document.getElementById('result');
+  btn.disabled = true;
+  res.className = 'result'; res.innerHTML = '<p>Forging a signature with a random ML-DSA-87 key and asking the chain…</p>';
+  try {
+    const sig = new Uint8Array(4627); // ML-DSA-87 signature length
+    crypto.getRandomValues(sig);
+    const data = buildWithdrawCalldata(VICTIM, QOR / 2n, sig);
+    const j = await rpc('eth_call', [{ to: VAULT, data }, 'latest']);
+    if (j.error) {
+      const data0 = (j.error.data || '').toLowerCase();
+      const isBadSig = data0.includes(BAD_SIG);
+      res.className = 'result ' + (isBadSig ? 'blocked' : 'error');
+      res.innerHTML = `<h3>${isBadSig ? '⛔ BLOCKED — the vault refused the attack' : 'Reverted (unexpected reason)'}</h3>
+        <p>The chain answered the exact call an attacker would send:</p>
+        <pre>eth_call withdraw(0.5 QOR → ${VICTIM})
+revert data: ${j.error.data || j.error.message}
+${isBadSig ? 'decoded: BadPqcSignature() — the signature is not the guardian\u2019s registered ML-DSA-87 key, so the pqcVerify precompile said no.' : ''}</pre>
+        <p>The forged signature was 4,627 random bytes. A real ML-DSA-87 signature from the guardian's key is the only thing that verifies — and that key never leaves the guardian. The most a stolen classical key can ever take from this vault is <b>0 QOR</b>.</p>
+        <p class="muted">Calldata (first 200 chars): <code>${data.slice(0, 200)}…</code> — ${data.length - 2} hex chars total. Nothing was sent: this was a read-only simulation.</p>`;
+    } else {
+      res.className = 'result error';
+      res.innerHTML = `<h3>⚠ Unexpected: the call did not revert</h3><p>Result: <code>${j.result}</code>. If you see this, the vault is broken — please open an issue on the repo.</p>`;
+    }
+  } catch (e) {
+    res.className = 'result error';
+    res.innerHTML = `<h3>Could not reach the chain</h3><p>${e.message}</p>`;
+  }
+  btn.disabled = false;
+});
+document.getElementById('reset').addEventListener('click', () => {
+  const res = document.getElementById('result');
+  res.className = 'result'; res.innerHTML = '';
+});
+loadVault();
+</script>
+</body>
+</html>
