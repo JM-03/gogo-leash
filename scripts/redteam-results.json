@@ -1,0 +1,84 @@
+{
+  "runAt": "2026-11-27T14:10:07.994Z",
+  "vault": "0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4",
+  "score": "11/11",
+  "results": [
+    {
+      "id": 1,
+      "name": "Forged ML-DSA-87 signature (0.5 QOR, allowlisted, within caps)",
+      "expected": "0xf35e1976",
+      "got": "0xf35e1976",
+      "blocked": true
+    },
+    {
+      "id": 2,
+      "name": "Unapproved payee (0.5 QOR, forged signature)",
+      "expected": "0x6f7a5275",
+      "got": "0x6f7a5275",
+      "blocked": true
+    },
+    {
+      "id": 3,
+      "name": "Over per-payment cap (2 QOR, cap is 1 QOR)",
+      "expected": "0xc8c92ec8",
+      "got": "0xc8c92ec8",
+      "blocked": true
+    },
+    {
+      "id": 4,
+      "name": "Replay of real withdrawal 0xc45070e7a9… (nonce already spent)",
+      "expected": "0xf35e1976",
+      "got": "0xf35e1976",
+      "blocked": true
+    },
+    {
+      "id": 5,
+      "name": "Non-guardian tries setAllowlisted (stolen agent key changes the rules)",
+      "expected": "0xef6d0f02",
+      "got": "0xef6d0f02",
+      "blocked": true
+    },
+    {
+      "id": 6,
+      "name": "Non-guardian tries setCaps (stolen agent key lifts the limits)",
+      "expected": "0xef6d0f02",
+      "got": "0xef6d0f02",
+      "blocked": true
+    },
+    {
+      "id": 7,
+      "name": "Over daily cap (state: spent 2 QOR, then 1 QOR)",
+      "expected": "Foundry test testOverDailyCapIsRefused",
+      "got": "reverted as expected",
+      "blocked": true
+    },
+    {
+      "id": 8,
+      "name": "Kill switch on (paused vault)",
+      "expected": "Foundry test testKillSwitchBlocksWithdrawals",
+      "got": "reverted as expected",
+      "blocked": true
+    },
+    {
+      "id": 9,
+      "name": "Only guardian can pause",
+      "expected": "Foundry test testOnlyGuardianCanPause",
+      "got": "reverted as expected",
+      "blocked": true
+    },
+    {
+      "id": 10,
+      "name": "Guardian key not registered",
+      "expected": "Foundry test testUnregisteredGuardianKeyIsRefused",
+      "got": "reverted as expected",
+      "blocked": true
+    },
+    {
+      "id": 11,
+      "name": "Guardian key not proven",
+      "expected": "Foundry test testUnprovenGuardianKeyIsRefused",
+      "got": "reverted as expected",
+      "blocked": true
+    }
+  ]
+}
