@@ -1,5 +1,18 @@
 # Threat model
 
+## Worst case, stated first
+
+If the guardian's ML-DSA-87 key **and** the agent's classical key are both
+stolen, the vault pays — the leash cannot stop the owner key itself. What
+is left: the per-payment cap (1 QOR) and the rolling 24-hour cap (3 QOR)
+still bind every single withdrawal, so the most a thief can take in a day
+is 3 QOR; the tripwire does not help here, because a thief with the real
+key makes no rejected attempts. The only stop is the owner rotating the
+guardian key on chain before the thief spends — rotation is possible, and
+the vault reads the registered key fresh on every withdrawal. This is why
+the guardian key never lives on the agent server and never leaves the
+owner's wallet.
+
 ## What Gogo Leash protects against
 
 | Attack | Protection | Where enforced |

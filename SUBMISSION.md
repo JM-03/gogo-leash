@@ -10,7 +10,7 @@ Deadline: 2 Dec 2026 23:59 UTC = 3 Dec 06:59 WIB.
 | Public GitHub repo (MIT) | Done — https://github.com/JM-03/gogo-leash (main) |
 | README + JUDGES.md + THREAT_MODEL.md + AI_USAGE.md + REDTEAM.md | Done |
 | Cover / featured image | Done — `cover.webp` (vault + leash + agent, no text) |
-| Video ≤ 3 min | Done — 86 s, `video/gogo-leash-demo.mp4` (English narration, real screen recording — live console, terminal, attack lab; GitHub does not preview-play a file this size — judges download it) |
+| Video ≤ 3 min | Done — 86 s, `video/gogo-leash-demo.mp4` (English narration, real screen recording — live console, terminal, attack lab; GitHub does not preview-play a file this size — judges download it). Re-recorded against vault v2 28 Nov ~05:15 WIB (sha256 `4f183bdc35…`, 3.14 MB): console, terminal, lab and close card all show the v2 address; narration unchanged. |
 | Live demo (no clone needed) | Done — console https://jm-03.github.io/gogo-leash/console/ · attack lab https://jm-03.github.io/gogo-leash/lab/ |
 | Red-team attack suite | Done — 11/11 attacks blocked, `scripts/redteam.mjs` (read-only, reruns against the live vault) + `REDTEAM.md` scorecard |
 | Tests from a clean clone | Done — 31/31 Forge + 33/33 Node, one command: `npm install && npm test` (verified from a fresh clone 27 Nov; counts re-verified 28 Nov) |

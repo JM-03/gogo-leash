@@ -33,7 +33,7 @@ unless the chain says so**:
 
 | What | Address / tx |
 | --- | --- |
-| **Vault v2** | [`0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f`](https://explore.qore.network/address/0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f) — 3 QOR deposit, 0.7 QOR left after 3 withdrawals (rolling 24h window, tripwire) |
+| **Vault v2** | [`0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f`](https://explore.qore.network/address/0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f) — 3 QOR deposit, 1.0 QOR after 3 withdrawals + a 0.3 QOR top-up (28 Nov, tx `0xb3d0356c…`) so the vault holds exactly what the demo video states (rolling 24h window, tripwire) |
 | **Owner / guardian** | `qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr` (EVM `0x7976B342501928c2b5E8f9cd70f596bfF19555f9`) |
 | **Agent link** | 1 QOR/payment, 3 QOR/day, 24h, tier `pqc` hybrid-verified — tx `9C1A4B49C83E3DCD1B9299025A7C5410C831041D1DA0E6C67614CF9770495938` |
 | **Payments paid** | 0.8 / 0.5 / 1.0 QOR — txs `F96612BECA02D6337A4E53488DD5699C3E1336783CF743905327B68E3F3091B6`, `CC6672ABB4B8A9F7A994514A51029C6F889F7A5E46E857C6C38FDBE6CC00D7B2`, `1B08400B39C3F2FECF77B3541C449BE16A913D2B28E0F96A028DC26257C2AC56` |
@@ -42,6 +42,7 @@ unless the chain says so**:
 | **MCP server** | read-only stdio JSON-RPC (`agent/mcp-server.mjs`, 5 tools: vault status, proposals, evaluation, drill, tripwire) — no keys, no spend |
 | **Daily live runs** | the agent runs itself every day on GitHub Actions (09:00 WIB): re-link, pay READY proposals, vault status, red-team, tripwire watch — see [DAILY_RUNS.md](DAILY_RUNS.md) |
 | **Red-team** | **11/11 attacks blocked** against the live vault — forged signature, unapproved payee, over-cap, replay, stolen agent key (live) + daily cap, kill switch, unregistered/unproven key (Forge) — see [REDTEAM.md](REDTEAM.md) |
+| **Coverage** | Vault v2: 100% lines, 95.7% statements, 100% functions (`forge coverage`, 28 Nov); v1: 78% lines |
 
 ## The Q-Day drill (the demo)
 
@@ -60,10 +61,11 @@ agent can lose is its daily limit, and one transaction stops it.
 ## Try it in 2 minutes (no keys, no faucet)
 
 ```bash
-# tools: node >= 22, npm or pnpm, foundry
-npm install            # or: pnpm install (via corepack: corepack enable && corepack prepare pnpm@latest --activate)
+# tools: node >= 22, npm, foundry
+npm install
 npm run forge-std      # one-time: install forge-std
 npm test               # 33 Node tests + 31 Forge tests — green, no account needed
+npm run verify         # npm test + red-team suite (read-only, live vault)
 ```
 
 ## Layout
@@ -91,8 +93,8 @@ npm test               # 33 Node tests + 31 Forge tests — green, no account ne
 ## Quickstart (testnet only, throwaway keys only)
 
 ```bash
-# tools: node >= 22, pnpm >= 9, foundry
-pnpm install
+# tools: node >= 22, npm, foundry
+npm install
 forge test            # vault logic, no account needed
 
 # agent keys (testnet throwaways, stored in ~/.config/gogo-leash/, mode 0600)
@@ -137,7 +139,9 @@ any file in this repo. `.env` and `~/.config/gogo-leash/` are git-ignored.
 
 - Public repo, MIT licence. Testnet address used: see `SUBMISSION.md`
   (filled in after the testnet deploy).
-- Video (≤ 3 min): `docs/VIDEO_SCRIPT.md`.
+- Video (≤ 3 min): `video/gogo-leash-demo.mp4` (86 s, real screen recording
+  of the live console, terminal and attack lab; script in
+  `docs/VIDEO_SCRIPT.md`).
 - Judges' 5-minute route: `JUDGES.md`.
 - Threat model and measured chain notes: `THREAT_MODEL.md`, `CHAIN_NOTES.md`.
 - AI usage: `AI_USAGE.md`.

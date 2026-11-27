@@ -65,7 +65,7 @@ code{color:#7ee787}
 </style></head><body><div>
 <h1>Gogo <span>Leash</span></h1>
 <p>The desk keeps trading. The money stays leashed.</p>
-<div class="small">github.com/JM-03/gogo-leash<br>vault <code>0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4</code> · QoreChain diana testnet<br>Post-Quantum AI Agents — Build Before Q-Day</div>
+<div class="small">github.com/JM-03/gogo-leash<br>vault <code>0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f</code> · QoreChain diana testnet<br>Post-Quantum AI Agents — Build Before Q-Day</div>
 </div></body></html>`;
 
 writeFileSync("/tmp/vidrec/terminal.html", terminal);

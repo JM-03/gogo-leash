@@ -100,15 +100,20 @@ itself because a reverted `withdraw()` rolls its counter back too).
 
 Vault v2 after the payments: 0.7 QOR, nonce 3, spent in rolling window
 2.3 QOR, caps 1 QOR/payment, 3 QOR/rolling 24h, kill switch off, tripwire
-0 trips (3 rejections inside 3600 s trips it). Live tripwire demo (real
-reverted attacks → watcher trips) not yet run on v2.
+0 trips (3 rejections inside 3600 s trips it). Top-up 28 Nov ~05:15 WIB:
+owner deposited 0.3 QOR (`0xb3d0356cf2212b18511e74e68343dc5ba8ee1422413bc0422aefa7ad9c8c7c33`,
+window `3F96A4FDD1CD40EE97543FA955285F0F8C658CBF67230A5AC1A22BAA34583B4A`) so the
+vault holds exactly 1.0 QOR — the figure the demo video narration states.
+Live tripwire demo (real reverted attacks → watcher trips) not yet run on v2.
 
 ## Local test evidence, v2 (no chain)
 
-- `forge test`: 25 passed, 0 failed (11 v1 + 14 v2, incl. the
+- `forge test`: 31 passed, 0 failed (11 v1 + 20 v2, incl. the
   midnight-crossing test — cap does NOT reset at midnight — and the
   window-sliding test, plus tripwire pause/unpause and v1-signature-dead-on-v2).
-- `node --test agent/`: 19 passed, 0 failed (13 policy + signal, 6 tripwire rule).
+  Re-verified from a clean clone 28 Nov ~05:00 WIB (`npm install && npm test`).
+- `node --test agent/`: 33 passed, 0 failed (13 policy + signal, 6 tripwire
+  rule, 10 MCP server, 4 vendor-sig).
 
 ## Vendor PQ signatures — verified live 28 Nov 2026 ~00:40 WIB
 

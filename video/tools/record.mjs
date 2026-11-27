@@ -29,6 +29,16 @@ async function recordClip(browser, name, { url, seconds }) {
 
   await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
 
+  // console: let the live vault data load BEFORE the first frame, so the
+  // clip never opens on the "Loading..." state. (Do NOT wait for "QOR":
+  // the page subtitle already contains it before any data loads.)
+  if (name === "console") {
+    await page.waitForFunction(
+      () => !document.body.innerText.includes("Loading..."),
+      { timeout: 15000 }
+    ).catch(() => {});
+  }
+
   // screenshot loop runs alongside the actions
   const frames = [];
   let shooting = true;
@@ -45,10 +55,6 @@ async function recordClip(browser, name, { url, seconds }) {
   const remaining = () => seconds * 1000 - (Date.now() - t0);
 
   if (name === "console") {
-    await page.waitForFunction(
-      () => document.body.innerText.includes("QOR"),
-      { timeout: 15000 }
-    ).catch(() => {});
     await sleep(4000);
     await page.mouse.move(640, 360, { steps: 12 });
     await sleep(1500);
