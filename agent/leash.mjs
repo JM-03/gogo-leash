@@ -52,6 +52,8 @@ import {
   onChain,
   REPO_ROOT,
 } from "./common.mjs";
+import { verifyInvoice, resolveVaultAddress } from "./vendor-sig.mjs";
+import { parseEther } from "viem";
 import { join } from "node:path";
 
 const SCORE_THRESHOLD = 60;
@@ -186,7 +188,7 @@ const cmds = {
     console.log(`\npropose: ${proposals.length} evaluated, local daily spend if all READY paid: ${fmtQor(spent.toString())} (chain is the final enforcer)`);
   },
 
-  async pay(to, qor, memo = "gogo-leash payment") {
+  async pay(to, qor, memo = "gogo-leash payment", vendor = null) {
     const o = await owner();
     const g = await gas();
     const k = agentKey();
@@ -197,6 +199,28 @@ const cmds = {
       audit("payment.refused-local", { to, qor: String(qor), reason: check.reason });
       process.exitCode = 1;
       return false;
+    }
+    // Vendor signature: a proposal that carries one must verify before paying.
+    // The vendor is the known gas wallet — any other payee cannot carry a
+    // verifiable vendor signature, so such a proposal is refused outright.
+    if (vendor) {
+      if (to !== g.cosmos) {
+        console.log(`  ${qor} QOR -> ${String(to).slice(0, 14)}...  REFUSED: vendor signature present but payee is not the known vendor`);
+        audit("payment.refused-vendor-sig", { to, qor: String(qor), reason: "payee is not the known vendor" });
+        process.exitCode = 1;
+        return false;
+      }
+      const vault = resolveVaultAddress();
+      const res = await verifyInvoice({
+        vendorCosmos: g.cosmos, vendorEvm: g.evm, vault,
+        amountWei: parseEther(String(qor)), invoiceId: vendor.invoiceId, signature: vendor.sig,
+      });
+      console.log(`  vendor signature ${vendor.invoiceId}: ${res.valid ? "VERIFIED" : `REFUSED — ${res.reason}`}`);
+      if (!res.valid) {
+        audit("payment.refused-vendor-sig", { to, qor: String(qor), invoiceId: vendor.invoiceId, reason: res.reason });
+        process.exitCode = 1;
+        return false;
+      }
     }
     const { nonce } = await fetchAuthNonce({ rest: REST, address: o.cosmos, pubkey: k.pk });
     const msg = await buildPhantomExecuteCosmos({ wallet: k.wallet, relayer: g.cosmos, chainId: "qorechain-diana", account: o.cosmos, to, amount: `${toUqor(qor)}uqor`, nonce });
@@ -250,7 +274,8 @@ const cmds = {
         continue;
       }
       console.log(`- ${p.name}: ${p.qor} QOR (score ${score.score})`);
-      if (await cmds.pay(p.to, String(p.qor), p.name)) {
+      const vendor = p.vendorSig && p.invoiceId ? { sig: p.vendorSig, invoiceId: p.invoiceId } : null;
+      if (await cmds.pay(p.to, String(p.qor), p.name, vendor)) {
         paid++;
         spent += BigInt(toUqor(p.qor));
       }
