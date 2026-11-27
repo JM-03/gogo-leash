@@ -59,6 +59,7 @@ precompile, not in the tx signature.
 | Allowlist demo vendor (gas EVM) | `0x664eb43719de488925abd5eb53a0c7192c8cf2b1d8404fd1821e7457c05c87b3` | allowlisted |
 | Q-Day Drill — forged PQ signature | (simulation, no tx) | **BLOCKED: `BadPqcSignature`** |
 | Real PQ-signed withdrawal 0.5 QOR | EVM `0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea` (native record `A534F1AAD2CC61B17ACF62626F3035F71CC0296EBFA80372EDC6352B5140FABF`, height 10846173, code 0) | WITHDRAWN, `tier: classical` (EVM lane) |
+| Second withdrawal 0.5 QOR (video take) | EVM `0xc45070e7a9081c30653d6558cb689f133e6b6126e90bbe8702e9d6878fb04ab4` (native record `983EFFA35C4EF4BFEF9CC0C75F34105E7F2AAF1AE46F06308110F499B70E966D`, height 10849064, code 0) | WITHDRAWN, receipt status 0x1 |
 | Agent pays 0.8 QOR (Server hosting) | `F96612BECA02D6337A4E53488DD5699C3E1336783CF743905327B68E3F3091B6` | PAID, hybrid verified |
 | Agent pays 0.5 QOR (Domain renewal) | `CC6672ABB4B8A9F7A994514A51029C6F889F7A5E46E857C6C38FDBE6CC00D7B2` | PAID, hybrid verified |
 | Agent pays 1 QOR (API credits top-up) | `1B08400B39C3F2FECF77B3541C449BE16A913D2B28E0F96A028DC26257C2AC56` | PAID, hybrid verified |

@@ -28,11 +28,11 @@ unless the chain says so**:
 
 | What | Address / tx |
 | --- | --- |
-| **Vault** | [`0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4`](https://explore.qore.network/address/C82274b045f7481C953f3DC0e88e9e54B308Dfd4) — 2 QOR deposit, 1.0 QOR left after 2 withdrawals |
+| **Vault** | [`0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4`](https://explore.qore.network/address/0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4) — 2 QOR deposit, 1.0 QOR left after 2 withdrawals |
 | **Owner / guardian** | `qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr` (EVM `0x7976B342501928c2b5E8f9cd70f596bfF19555f9`) |
 | **Agent link** | 1 QOR/payment, 3 QOR/day, 24h, tier `pqc` hybrid-verified — tx `9C1A4B49C83E3DCD1B9299025A7C5410C831041D1DA0E6C67614CF9770495938` |
 | **Payments paid** | 0.8 / 0.5 / 1.0 QOR — txs `F96612BECA02D6337A4E53488DD5699C3E1336783CF743905327B68E3F3091B6`, `CC6672ABB4B8A9F7A994514A51029C6F889F7A5E46E857C6C38FDBE6CC00D7B2`, `1B08400B39C3F2FECF77B3541C449BE16A913D2B28E0F96A028DC26257C2AC56` |
-| **Q-Day drill** | forged PQ signature refused (`BadPqcSignature`); real 0.5 QOR withdrawal paid — tx [`0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea`](https://explore.qore.network/tx/19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea) |
+| **Q-Day drill** | forged PQ signature refused (`BadPqcSignature`); real 0.5 QOR withdrawal paid — tx [`0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea`](https://explore.qore.network/tx/A534F1AAD2CC61B17ACF62626F3035F71CC0296EBFA80372EDC6352B5140FABF) |
 
 ## The Q-Day drill (the demo)
 

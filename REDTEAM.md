@@ -3,7 +3,7 @@
 **Score: 11/11 attacks blocked.** Run `node scripts/redteam.mjs` to reproduce
 it yourself — no keys, no gas, no transactions. Every live attack is a
 read-only `eth_call` against the deployed vault
-[`0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4`](https://explore.qore.network/address/C82274b045f7481C953f3DC0e88e9e54B308Dfd4)
+[`0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4`](https://explore.qore.network/address/0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4)
 on the qorechain-diana testnet. Results are also saved in
 `scripts/redteam-results.json`.
 
