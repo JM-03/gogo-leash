@@ -28,8 +28,9 @@ from the chain (REST + explorer).
 
 ## Faucet (done 27 Nov 2026 18:07 WIB)
 
-- Dashboard sign-in is AWS Cognito; Elgi signed in with Google
-  (nicoaji04@gmail.com) and accepted the dashboard Terms of Service.
+- Dashboard sign-in is AWS Cognito; the owner signed in with Google
+  (the registered competition account) and accepted the dashboard Terms
+  of Service.
 - Claim 1 — SUCCEEDED: 100 QOR (+ 1000 fUSD, 0.5 fETH, 0.02 fBTC test
   tokens) to the owner address.
   Tx `DA188CF8CF3F4F07928B9162A82032E041B7A7198C68280BA35086EB6B449F99`

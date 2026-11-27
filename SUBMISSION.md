@@ -24,8 +24,8 @@ Deadline: 2 Dec 2026 23:59 UTC = 3 Dec 06:59 WIB.
 ## Registration notes (for Elgi)
 
 - Register at build.qorechain.io with GitHub JM-03 + X @jmartil1 + a QoreX
-  testnet address. Use nicoaji04@gmail.com — that is the Gmail-connected
-  account, so confirmation + links can be fetched.
+  testnet address. Use the Gmail-connected competition account, so
+  confirmation + links can be fetched.
 - Faucet (dashboard.qorechain.io/faucet, 100 QOR / 24h per address) — claim
   for the two throwaway addresses above so the deploy + agent link can run.
   No keys are ever shared: the faucet only needs the public `qor1...`
