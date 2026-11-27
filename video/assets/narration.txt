@@ -1,0 +1,9 @@
+A quantum computer breaks your wallet key one day. What happens to your trading desk's money the next minute? This vault is live on the QoreChain testnet right now. One QOR inside, and the chain decides every payment.
+
+Today, an AI trading agent holds a key, and its limits live in its own code. One bug, one stolen server, and the limits are gone. Gogo Leash moves the limits onto the chain.
+
+The agent proposes five desk bills. Three are ready. Two are refused before spending any gas: one to a stranger who is not allowlisted, one over the daily cap. Then the Q-Day drill: the attacker stole the classical key and signs with a forged post-quantum key. Blocked by the vault: Bad P Q Signature.
+
+Try it yourself, no install. Attack one: forged signature — blocked. Attack two: unapproved payee — blocked. Attack three: over the cap — blocked. And the real key? The signature verifies, and the real payment is on chain. Eleven attacks, eleven blocked.
+
+When Q-Day comes, or a key leaks today, the most a compromised agent can lose is its daily limit, and one transaction stops it. Gogo Leash: the desk keeps trading, the money stays leashed.
