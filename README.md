@@ -8,6 +8,7 @@
 **Track:** Post-Quantum AI Agents — QoreChain "Build Before Q-Day" developer fest
 **Builder:** Gogo Maduro (solo) · **Chain:** QoreChain testnet `qorechain-diana` only
 **Status:** ✅ LIVE on testnet — vault deployed, 3 agent payments paid, Q-Day drill blocked a forged signature and a real guardian withdrawal paid
+**Live demo (no install):** [treasury console](https://jm-03.github.io/gogo-leash/console/) — vault state read live from the chain · [attack lab](https://jm-03.github.io/gogo-leash/lab/) — try the 3 attacks yourself, then verify the real signature and the real payment
 
 An AI trading agent proposes payments and settlements, but **nothing moves
 unless the chain says so**:
