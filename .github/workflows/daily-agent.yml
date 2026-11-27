@@ -64,6 +64,11 @@ jobs:
         # kill the whole run.
         continue-on-error: true
 
+      - name: Install forge-std (test library — not stored in the repo)
+        # Same guard as package.json "pretest": a fresh checkout has no
+        # lib/forge-std, and the web-uploaded repo carries no submodule.
+        run: test -d lib/forge-std || npm run forge-std
+
       - name: Red-team suite (read-only, no keys, no gas)
         run: node scripts/redteam.mjs
 
