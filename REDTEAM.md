@@ -8,6 +8,12 @@ read-only `eth_call` against the deployed vault v2
 on the qorechain-diana testnet. Results are also saved in
 `scripts/redteam-results.json`.
 
+Note on the daily CI run: if forge cannot be installed on the runner
+(the Foundry release download has 504'd on GitHub's side), the 5 local
+Foundry cases are skipped and that run scores the 6 live attacks; a real
+forge test failure still fails the run. The local cases stay proven here
+in the repo (31/31 Forge).
+
 ## Live attacks (against the real vault)
 
 | # | Attack | Expected | Got | Verdict |
