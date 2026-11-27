@@ -1,9 +1,10 @@
 # Red-team scorecard — Gogo Leash
 
-**Score: 11/11 attacks blocked.** Run `node scripts/redteam.mjs` to reproduce
+**Score: 11/11 attacks blocked** (re-run against vault v2, 28 Nov 2026).
+Run `node scripts/redteam.mjs` to reproduce
 it yourself — no keys, no gas, no transactions. Every live attack is a
-read-only `eth_call` against the deployed vault
-[`0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4`](https://explore.qore.network/address/0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4)
+read-only `eth_call` against the deployed vault v2
+[`0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f`](https://explore.qore.network/address/0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f)
 on the qorechain-diana testnet. Results are also saved in
 `scripts/redteam-results.json`.
 
@@ -14,7 +15,7 @@ on the qorechain-diana testnet. Results are also saved in
 | 1 | Forged ML-DSA-87 signature (4,627 random bytes, 0.5 QOR, allowlisted, within caps) | `BadPqcSignature` `0xf35e1976` | `0xf35e1976` | BLOCKED |
 | 2 | Unapproved payee (0.5 QOR to an address never allowlisted) | `NotAllowlisted` `0x6f7a5275` | `0x6f7a5275` | BLOCKED |
 | 3 | Over per-payment cap (2 QOR, cap is 1 QOR) | `OverPerTxCap` `0xc8c92ec8` | `0xc8c92ec8` | BLOCKED |
-| 4 | Replay of the real 0.5 QOR withdrawal (`0xc45070e7…`, nonce already spent) | `BadPqcSignature` `0xf35e1976` | `0xf35e1976` | BLOCKED |
+| 4 | Replay of the real v2 0.8 QOR withdrawal (`0xe5e33881…`, nonce already spent) | `BadPqcSignature` `0xf35e1976` or `OverDailyCap` `0x92ec8899` | `0x92ec8899` | BLOCKED |
 | 5 | Non-guardian tries `setAllowlisted` (stolen agent key changes the rules) | `NotGuardian` `0xef6d0f02` | `0xef6d0f02` | BLOCKED |
 | 6 | Non-guardian tries `setCaps` (stolen agent key lifts the limits) | `NotGuardian` `0xef6d0f02` | `0xef6d0f02` | BLOCKED |
 
@@ -45,7 +46,16 @@ on the qorechain-diana testnet. Results are also saved in
 
 ## Known limitation — stated, not hidden
 
-The daily cap is a **UTC calendar-day bucket**. 3 QOR at 23:59 plus 3 QOR at
-00:01 would both pass. Vault v2 (planned before the 3 Dec deadline) replaces
-it with a **rolling 24h window** and adds a **tripwire**: 3 refusals in 10
-minutes auto-pauses the vault until the guardian reopens it.
+The v1 daily cap was a **UTC calendar-day bucket**. 3 QOR at 23:59 plus 3 QOR
+at 00:01 would both pass. **Fixed in v2 (deployed 28 Nov 2026):** the cap is
+a **rolling 24h window**, proven by a midnight-crossing test and a fuzz test
+over random payment sequences. V2 also adds a **tripwire**: 3 rejected
+withdrawals inside 1 hour auto-pause the vault until the guardian reopens
+it — proven in Forge + Node tests and the watcher code, but the live
+on-chain trip demo has not run yet.
+
+Why attack 4 lists two expected reverts: v2 checks the rolling-window cap
+**before** the signature. While the window holds 2.3 QOR, replaying the
+0.8 QOR withdrawal is refused as `OverDailyCap` (2.3 + 0.8 > 3); once the
+window slides it is refused as `BadPqcSignature` (the signature binds the
+spent nonce). Either way the replay cannot pay.
