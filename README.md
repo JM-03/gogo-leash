@@ -1,13 +1,13 @@
 # Gogo Leash — a post-quantum treasury guardian for an AI trading desk
 
 [![Chain: QoreChain diana testnet](https://img.shields.io/badge/chain-QoreChain%20diana%20testnet-6b5ce7)](https://explore.qore.network)
-[![Tests: 11/11 Forge + 13/13 Node](https://img.shields.io/badge/tests-11%2F11%20Forge%20%2B%2013%2F13%20Node-green)](CHAIN_NOTES.md)
+[![Tests: 31/31 Forge + 33/33 Node](https://img.shields.io/badge/tests-31%2F31%20Forge%20%2B%2033%2F33%20Node-green)](CHAIN_NOTES.md)
 [![Cost: $0 testnet](https://img.shields.io/badge/cost-%240%20testnet-blue)](CHAIN_NOTES.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Track:** Post-Quantum AI Agents — QoreChain "Build Before Q-Day" developer fest
 **Builder:** Gogo Maduro (solo) · **Chain:** QoreChain testnet `qorechain-diana` only
-**Status:** ✅ LIVE on testnet — vault deployed, 3 agent payments paid, Q-Day drill blocked a forged signature and a real guardian withdrawal paid
+**Status:** ✅ LIVE on testnet — vault v2 deployed (rolling 24h window + tripwire auto-pause), 3 agent payments paid, Q-Day drill blocked a forged signature and a real guardian withdrawal paid; vendor-signed invoices verified before paying; read-only MCP server; the agent runs itself daily on GitHub Actions
 **Live demo (no install):** [treasury console](https://jm-03.github.io/gogo-leash/console/) — vault state read live from the chain · [attack lab](https://jm-03.github.io/gogo-leash/lab/) — try the 3 attacks yourself, then verify the real signature and the real payment
 
 An AI trading agent proposes payments and settlements, but **nothing moves
@@ -17,7 +17,9 @@ unless the chain says so**:
    post-quantum signature**, verified on chain by QoreChain's `pqcVerify`
    precompile. A stolen classical (secp256k1) key alone pays nothing.
 2. The vault enforces an **allowlist of recipients**, a **per-payment cap**
-   and a **daily cap**, plus a guardian **kill switch**. All of it lives in
+   and a **rolling 24-hour cap**, plus a guardian **kill switch** and a
+   **tripwire** that pauses the vault automatically after 3 rejected
+   withdrawal attempts inside an hour. All of it lives in
    the contract, not in the agent's code.
 3. The agent itself spends from the owner account only through a
    chain-enforced **authenticator link**: `send` only, per-payment and daily
@@ -31,11 +33,14 @@ unless the chain says so**:
 
 | What | Address / tx |
 | --- | --- |
-| **Vault** | [`0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4`](https://explore.qore.network/address/0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4) — 2 QOR deposit, 1.0 QOR left after 2 withdrawals |
+| **Vault v2** | [`0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f`](https://explore.qore.network/address/0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f) — 3 QOR deposit, 0.7 QOR left after 3 withdrawals (rolling 24h window, tripwire) |
 | **Owner / guardian** | `qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr` (EVM `0x7976B342501928c2b5E8f9cd70f596bfF19555f9`) |
 | **Agent link** | 1 QOR/payment, 3 QOR/day, 24h, tier `pqc` hybrid-verified — tx `9C1A4B49C83E3DCD1B9299025A7C5410C831041D1DA0E6C67614CF9770495938` |
 | **Payments paid** | 0.8 / 0.5 / 1.0 QOR — txs `F96612BECA02D6337A4E53488DD5699C3E1336783CF743905327B68E3F3091B6`, `CC6672ABB4B8A9F7A994514A51029C6F889F7A5E46E857C6C38FDBE6CC00D7B2`, `1B08400B39C3F2FECF77B3541C449BE16A913D2B28E0F96A028DC26257C2AC56` |
-| **Q-Day drill** | forged PQ signature refused (`BadPqcSignature`); real 0.5 QOR withdrawal paid — tx [`0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea`](https://explore.qore.network/tx/A534F1AAD2CC61B17ACF62626F3035F71CC0296EBFA80372EDC6352B5140FABF) |
+| **Q-Day drill** | forged PQ signature refused (`BadPqcSignature`); real 0.8 QOR withdrawal paid — tx [`0xe5e33881dbe9b183505d6b4b31f5d480264a33d9ab5a335b4ab47f8b0b08e45b`](https://explore.qore.network/tx/6FD5D69E45DDFB8240DD2019A5BFC335607CF7BDF90DD7CC30A44BC585DD5AC4) |
+| **Vendor signatures** | the vendor signs each invoice with its own ML-DSA-87 key; the agent verifies it locally + against the on-chain `pqcVerify` precompile before paying — real invoice `INV-2026-11-001` VERIFIED, tampered + wrong-amount REFUSED — see `agent/vendor-sig.mjs` |
+| **MCP server** | read-only stdio JSON-RPC (`agent/mcp-server.mjs`, 5 tools: vault status, proposals, evaluation, drill, tripwire) — no keys, no spend |
+| **Daily live runs** | the agent runs itself every day on GitHub Actions (09:00 WIB): re-link, pay READY proposals, vault status, red-team, tripwire watch — see [DAILY_RUNS.md](DAILY_RUNS.md) |
 | **Red-team** | **11/11 attacks blocked** against the live vault — forged signature, unapproved payee, over-cap, replay, stolen agent key (live) + daily cap, kill switch, unregistered/unproven key (Forge) — see [REDTEAM.md](REDTEAM.md) |
 
 ## The Q-Day drill (the demo)
@@ -46,8 +51,8 @@ unless the chain says so**:
   chain** (`BadPqcSignature`) — verified live on testnet;
 - a payment attempted after the agent link is revoked is **refused**
   (`linked key is unbound or revoked`);
-- a real guardian-signed withdrawal of 0.5 QOR **pays** (tx
-  `0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea`).
+- a real guardian-signed withdrawal of 0.8 QOR **pays** (tx
+  `0xe5e33881dbe9b183505d6b4b31f5d480264a33d9ab5a335b4ab47f8b0b08e45b`).
 
 The point: when Q-Day comes — or a key leaks today — the most a compromised
 agent can lose is its daily limit, and one transaction stops it.
@@ -58,22 +63,30 @@ agent can lose is its daily limit, and one transaction stops it.
 # tools: node >= 22, npm or pnpm, foundry
 npm install            # or: pnpm install (via corepack: corepack enable && corepack prepare pnpm@latest --activate)
 npm run forge-std      # one-time: install forge-std
-npm test               # 13 Node tests + 11 Forge tests — green, no account needed
+npm test               # 33 Node tests + 31 Forge tests — green, no account needed
 ```
 
 ## Layout
 
 | Path | What it is |
 | --- | --- |
-| `contracts/GogoLeashVault.sol` | Vault: PQ-signed withdrawals + allowlist + caps + kill switch |
-| `test/GogoLeashVault.t.sol` | Forge tests (mocked precompiles via `vm.etch`) |
+| `contracts/GogoLeashVault.sol` | Vault v1: PQ-signed withdrawals + allowlist + caps + kill switch |
+| `contracts/GogoLeashVaultV2.sol` | Vault v2: rolling 24h window + tripwire auto-pause (v1 signatures are dead on it) |
+| `test/GogoLeashVault.t.sol` | Forge tests v1 (mocked precompiles via `vm.etch`) |
+| `test/GogoLeashVaultV2.t.sol` | Forge tests v2 incl. midnight-crossing + rolling-window fuzz invariant |
 | `script/DeployGogoLeash.s.sol` | Foundry deploy script (testnet) |
+| `script/DeployGogoLeashV2.s.sol` | Foundry deploy script for v2 |
 | `agent/leash.mjs` | The agent CLI: keys, link, pay, propose, run, revoke, drill |
 | `agent/policy.mjs` | Pure leash policy engine (allowlist, caps, kill switch) |
 | `agent/signal.mjs` | Pure proposal scoring (EMA trend + momentum filter) |
+| `agent/tripwire.mjs` | Tripwire watcher: scans for reverted withdrawals, trips the vault |
+| `agent/mcp-server.mjs` | Read-only MCP server (stdio JSON-RPC, 5 tools, no keys) |
+| `agent/vendor-sig.mjs` | Vendor invoice signatures: sign + verify (local + on-chain precompile) |
 | `agent/proposals.json` | Sample desk intents the agent evaluates |
 | `agent/console/` | Tiny web console: policy, balances, rules, audit tail |
+| `.github/workflows/daily-agent.yml` | Daily live agent run (09:00 WIB) — see [DAILY_RUNS.md](DAILY_RUNS.md) |
 | `scripts/window.mjs` | Open/check the EVM authorisation window (deploy path) |
+| `scripts/redteam.mjs` | Red-team suite (read-only, 11 attacks vs the live v2 vault) |
 
 ## Quickstart (testnet only, throwaway keys only)
 
