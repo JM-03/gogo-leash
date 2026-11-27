@@ -26,6 +26,8 @@ unless the chain says so**:
 
 ## Live on testnet (all verifiable on [explore.qore.network](https://explore.qore.network))
 
+> Explorer links open on Mainnet by default — switch it to Testnet (diana) first, or the transactions show as "not found".
+
 | What | Address / tx |
 | --- | --- |
 | **Vault** | [`0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4`](https://explore.qore.network/address/0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4) — 2 QOR deposit, 1.0 QOR left after 2 withdrawals |
