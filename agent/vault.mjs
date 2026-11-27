@@ -36,8 +36,15 @@ const abi = parseAbi([
   "function paused() view returns (bool)",
   "function allowlisted(address) view returns (bool)",
   "function spentTodayAmount() view returns (uint256)",
+  "function spentInWindowAmount() view returns (uint256)",
+  "function tripwirePaused() view returns (bool)",
+  "function tripwireTrips() view returns (uint256)",
+  "function tripwireThreshold() view returns (uint256)",
+  "function tripwireWindow() view returns (uint256)",
   "function withdrawalMessage(address to, uint256 amount, uint256 nonce) view returns (bytes)",
   "function withdraw(address to, uint256 amount, bytes mldsaSignature)",
+  "function trip(uint256 failures)",
+  "function setTripwire(uint256 threshold, uint256 windowSeconds)",
   "function setAllowlisted(address account, bool allowed)",
   "function setCaps(uint256 perTxCap, uint256 dailyCap)",
   "function pause()",
@@ -99,7 +106,7 @@ async function prepare(to, qor) {
 
 const commands = {
   async status() {
-    const [bal, guardian, n, perTx, daily, spent, paused] = await Promise.all([
+    const [bal, guardian, n, perTx, daily, spent, paused, tripped, trips, threshold, windowSeconds] = await Promise.all([
       pub.getBalance({ address: vault }),
       pub.readContract({ address: vault, abi, functionName: "guardian" }),
       pub.readContract({ address: vault, abi, functionName: "nonce" }),
@@ -107,12 +114,17 @@ const commands = {
       pub.readContract({ address: vault, abi, functionName: "dailyCap" }),
       pub.readContract({ address: vault, abi, functionName: "spentTodayAmount" }),
       pub.readContract({ address: vault, abi, functionName: "paused" }),
+      pub.readContract({ address: vault, abi, functionName: "tripwirePaused" }).catch(() => false),
+      pub.readContract({ address: vault, abi, functionName: "tripwireTrips" }).catch(() => 0n),
+      pub.readContract({ address: vault, abi, functionName: "tripwireThreshold" }).catch(() => 0n),
+      pub.readContract({ address: vault, abi, functionName: "tripwireWindow" }).catch(() => 0n),
     ]);
     console.log(`vault     ${vault}  ${formatEther(bal)} QOR`);
     console.log(`guardian  ${guardian}`);
     console.log(`nonce     ${n} withdrawals so far`);
-    console.log(`caps      ${formatEther(perTx)} QOR per payment, ${formatEther(daily)} QOR per day (spent today ${formatEther(spent)})`);
-    console.log(`kill switch: ${paused ? "PAUSED" : "off"}`);
+    console.log(`caps      ${formatEther(perTx)} QOR per payment, ${formatEther(daily)} QOR per rolling 24h (spent in window ${formatEther(spent)})`);
+    console.log(`kill switch: ${paused ? "PAUSED" : "off"}${tripped ? " (by tripwire)" : ""}`);
+    if (threshold) console.log(`tripwire  ${trips} trips so far; ${threshold} rejected attempts inside ${windowSeconds}s trips it`);
   },
 
   async withdraw(to, qor) {
@@ -158,6 +170,38 @@ const commands = {
     }
   },
 
+  async attackLive(to, qor) {
+    // Same forged signature as `attack`, but sent as a REAL transaction, so
+    // it lands on chain as a reverted withdraw() call. That is what the
+    // tripwire watcher looks for: three of these inside its window and it
+    // pauses the vault by itself. Explicit gas, because gas estimation
+    // refuses a transaction that is going to revert.
+    const { amount, n, message } = await prepare(to, qor);
+    const forged = pqcSign(generatePqcKeypair().secretKey, message);
+    console.log(`attacker sends REAL withdrawal #${n}: ${qor} QOR to ${to}, forged ML-DSA-87 signature`);
+    const wallet = createWalletClient({ account: sender(), chain: diana, transport: http() });
+    try {
+      const hash = await wallet.writeContract({ address: vault, abi, functionName: "withdraw", args: [to, amount, toHex(forged)], gas: 1_000_000n });
+      const r = await pub.waitForTransactionReceipt({ hash });
+      console.log(`  ${r.status === "success" ? "UNEXPECTED: it went through" : "REVERTED on chain"}  tx ${hash}  gas ${r.gasUsed}`);
+      console.log(`  ${EXPLORER}${hash}`);
+      audit("vault.drill-attack-live", { to, qor: String(qor), result: r.status === "success" ? "UNEXPECTED-PASS" : "REVERTED", tx: hash });
+      if (r.status === "success") process.exitCode = 1;
+    } catch (e) {
+      console.log(`  could not send: ${why(e)}`);
+      process.exitCode = 1;
+    }
+  },
+
+  async trip(failures = "3") {
+    // Manual trip (what the tripwire watcher calls automatically): pause the
+    // vault and record that the tripwire fired after `failures` rejections.
+    const wallet = createWalletClient({ account: sender(), chain: diana, transport: http() });
+    const hash = await wallet.writeContract({ address: vault, abi, functionName: "trip", args: [BigInt(failures)], gas: 500_000n });
+    console.log(`vault TRIPPED after ${failures} rejected attempts (kill switch on, tripwire)  tx ${hash}`);
+    audit("vault.trip", { failures, tx: hash });
+  },
+
   async allowlist(addr, allowed = "true") {
     const wallet = createWalletClient({ account: sender(), chain: diana, transport: http() });
     const hash = await wallet.writeContract({ address: vault, abi, functionName: "setAllowlisted", args: [addr, allowed === "true"], gas: 500_000n });
@@ -187,13 +231,17 @@ const commands = {
   },
 };
 
+import { pathToFileURL } from "node:url";
+
 const [cmd = "status", ...args] = process.argv.slice(2);
-const run = commands[cmd];
-if (!run) {
-  console.error("Use: status | withdraw <to> <QOR> | attack <to> <QOR> | allowlist <addr> [true|false] | caps <perTxQOR> <dailyQOR> | pause | unpause");
-  process.exit(1);
+const run = commands[cmd] ?? commands[{ "attack-live": "attackLive" }[cmd] ?? ""];
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  if (!run) {
+    console.error("Use: status | withdraw <to> <QOR> | attack <to> <QOR> | attack-live <to> <QOR> | allowlist <addr> [true|false] | caps <perTxQOR> <dailyQOR> | pause | unpause | trip [failures]");
+    process.exit(1);
+  }
+  run(...args).catch((e) => {
+    console.error(why(e));
+    process.exitCode = 1;
+  });
 }
-run(...args).catch((e) => {
-  console.error(why(e));
-  process.exitCode = 1;
-});
