@@ -13,26 +13,26 @@ Deadline: 2 Dec 2026 23:59 UTC = 3 Dec 06:59 WIB.
 | Video ≤ 3 min | Done — 86 s, `video/gogo-leash-demo.mp4` (English narration, real screen recording — live console, terminal, attack lab; GitHub does not preview-play a file this size — judges download it) |
 | Live demo (no clone needed) | Done — console https://jm-03.github.io/gogo-leash/console/ · attack lab https://jm-03.github.io/gogo-leash/lab/ |
 | Red-team attack suite | Done — 11/11 attacks blocked, `scripts/redteam.mjs` (read-only, reruns against the live vault) + `REDTEAM.md` scorecard |
-| Tests from a clean clone | Done — 11/11 Forge + 13/13 Node, one command: `npm install && npm test` (verified from a fresh clone 27 Nov) |
+| Tests from a clean clone | Done — 31/31 Forge + 33/33 Node, one command: `npm install && npm test` (verified from a fresh clone 27 Nov; counts re-verified 28 Nov) |
 | Testnet address used | `qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr` (owner/guardian, throwaway) |
 | Gas wallet | `qor1pk2muymrj4ps4ual2h48qf3rvz9n2f8aulgluv` (throwaway) |
-| Vault contract address | Done — `0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4` (chain 9800, deploy tx `0x4ccc61539d60789d72d5b4adfbf6e6294c5d4c20aad9dbf686c269f05e7e5218`, 2 QOR deposit) |
+| Vault contract address | Done — v2 `0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f` (chain 9800, deploy tx `0x330924e9be043d6649ce750710ab327e3e86098a9e9cf9a505cbbb75ba62d530`, 3 QOR deposit, live 28 Nov; v1 was `0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4`) |
 | On-chain proof txs | Done — see CHAIN_NOTES.md: faucet claim `DA188CF8…`, owner+gas ML-DSA-87 registrations, agent link `9C1A4B49…` (tier pqc, hybrid verified), vault deploy, Q-Day Drill forged signature **BLOCKED `BadPqcSignature`**, real PQ-signed withdrawal `0x19b2208b…`, 3 agent payments paid (2.3 QOR, hybrid verified), 2 refused as designed |
 | Fest registration (GitHub + X + QoreX testnet address) | Done — 4/4 complete 27 Nov 20:27 WIB (GitHub JM-03, Level Advanced, Team Solo, 18+; X @Jmartil1 post `2126306395545076060`; QoreX proof tx `878B2FED…`) |
-| Project submission form (build.qorechain.io/projects/new) | **SUBMITTED 27 Nov 23:01 WIB — https://build.qorechain.io/p/gogo-leash** ("Gogo Leash Submitted" timeline entry; tagline + description + How-it's-made live on page; category Post-Quantum AI Agents, team @JM-03, QoreChain SDK VERIFIED + network features VERIFIED; demo link = lab only; video GitHub MP4 ACCEPTED; testnet address qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr; no sign-in needed, account already signed in) |
+| Project submission form (build.qorechain.io/projects/new) | **SUBMITTED 27 Nov 23:01 WIB — https://build.qorechain.io/p/gogo-leash** ("Gogo Leash Submitted" timeline entry; tagline + description + How-it's-made live on page; category Post-Quantum AI Agents, team @JM-03, QoreChain SDK VERIFIED + network features VERIFIED; demo link = lab only; video GitHub MP4 ACCEPTED; testnet address qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr; no sign-in needed, account already signed in). **v2 How-it's-made approved 28 Nov (Elgi's delegation) — page edit pending, needs the device browser.** |
 
 ## Form texts (revised 27 Nov 22:54 WIB — approved by Elgi 22:57 WIB; tagline: original kept, jink's pick over the PQ variant — cleaner, one contrast, PQ carried by track + description)
 
-**DRAFT v2 texts below (prepared 28 Nov ~00:55 WIB, NOT yet approved — Elgi
-must approve before the project page is edited): vault v2 address,
+**v2 texts below (prepared 28 Nov ~00:55 WIB, APPROVED by Elgi's delegation
+28 Nov 00:33 WIB — "loo atur gimna baiknya aja"): vault v2 address,
 rolling 24h window, tripwire, vendor signatures, MCP server, daily runs,
-test counts. The live v1 texts above stay in force until then.**
+test counts. The v1 texts stay on the live page until the page edit lands.**
 
 **Tagline:** An AI agent that can spend — but only what the chain allows.
 
 **Description:** Post-quantum treasury guardian for an AI trading desk. The agent spends only through a chain-enforced link (1 QOR per payment, 3 QOR per day, 24 h, revocable); the vault pays only on a verified ML-DSA-87 signature, to an allowlisted address, inside the caps, with a kill switch.
 
-**How it's made (DRAFT v2):**
+**How it's made (v2):**
 
 Gogo Leash is a post-quantum treasury guardian for an AI trading desk, built on the QoreChain diana testnet. The problem: an agent that holds a key can spend without limit if the key leaks or the agent is compromised — so Gogo Leash moves the limits onto the chain. A Solidity vault v2 (0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f, live 28 Nov) pays only when four conditions hold: the guardian's ML-DSA-87 signature verifies on chain via the pqcVerify precompile, the recipient is allowlisted, the payment is inside the per-payment (1 QOR) and rolling 24-hour (3 QOR) caps, and the kill switch is off. A tripwire pauses the vault automatically after 3 rejected withdrawal attempts inside an hour. The agent spends through a chain-enforced authenticator link — send-only, 24 hours, revocable in one transaction. The vendor signs each invoice with its own ML-DSA-87 key, and the agent verifies that signature locally and against the on-chain precompile before paying. A Node CLI built on the QoreChain SDK proposes and executes payments; a read-only MCP server lets any agent client inspect the vault, the proposals and the drill; a web console shows policy, balances and the append-only audit log; the agent runs itself daily on GitHub Actions.
 
