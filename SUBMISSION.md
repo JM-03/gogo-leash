@@ -19,14 +19,16 @@ Deadline: 2 Dec 2026 23:59 UTC = 3 Dec 06:59 WIB.
 | Vault contract address | Done — v2 `0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f` (chain 9800, deploy tx `0x330924e9be043d6649ce750710ab327e3e86098a9e9cf9a505cbbb75ba62d530`, 3 QOR deposit, live 28 Nov; v1 was `0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4`) |
 | On-chain proof txs | Done — see CHAIN_NOTES.md: faucet claim `DA188CF8…`, owner+gas ML-DSA-87 registrations, agent link `9C1A4B49…` (tier pqc, hybrid verified), vault deploy, Q-Day Drill forged signature **BLOCKED `BadPqcSignature`**, real PQ-signed withdrawal `0x19b2208b…`, 3 agent payments paid (2.3 QOR, hybrid verified), 2 refused as designed |
 | Fest registration (GitHub + X + QoreX testnet address) | Done — 4/4 complete 27 Nov 20:27 WIB (GitHub JM-03, Level Advanced, Team Solo, 18+; X @Jmartil1 post `2126306395545076060`; QoreX proof tx `878B2FED…`) |
-| Project submission form (build.qorechain.io/projects/new) | **SUBMITTED 27 Nov 23:01 WIB — https://build.qorechain.io/p/gogo-leash** ("Gogo Leash Submitted" timeline entry; tagline + description + How-it's-made live on page; category Post-Quantum AI Agents, team @JM-03, QoreChain SDK VERIFIED + network features VERIFIED; demo link = lab only; video GitHub MP4 ACCEPTED; testnet address qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr; no sign-in needed, account already signed in). **v2 How-it's-made approved 28 Nov (Elgi's delegation) — page edit pending, needs the device browser.** |
+| Project submission form (build.qorechain.io/projects/new) | **SUBMITTED 27 Nov 23:01 WIB — https://build.qorechain.io/p/gogo-leash** ("Gogo Leash Submitted" timeline entry; tagline + description + How-it's-made live on page; category Post-Quantum AI Agents, team @JM-03, QoreChain SDK VERIFIED + network features VERIFIED; demo link = lab only; video GitHub MP4 ACCEPTED; testnet address qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr; no sign-in needed, account already signed in). **v2 How-it's-made approved 28 Nov (Elgi's delegation) — page edit DONE 28 Nov 04:53 WIB via the device browser (takeover authorized by Elgi), verified live: vault v2 0x9C254f… + "rolling 24-hour" shown.** |
 
 ## Form texts (revised 27 Nov 22:54 WIB — approved by Elgi 22:57 WIB; tagline: original kept, jink's pick over the PQ variant — cleaner, one contrast, PQ carried by track + description)
 
 **v2 texts below (prepared 28 Nov ~00:55 WIB, APPROVED by Elgi's delegation
 28 Nov 00:33 WIB — "loo atur gimna baiknya aja"): vault v2 address,
 rolling 24h window, tripwire, vendor signatures, MCP server, daily runs,
-test counts. The v1 texts stay on the live page until the page edit lands.**
+test counts. The v2 texts are LIVE on the project page since 28 Nov 04:53 WIB
+(page edit via the device browser, verified: vault v2 0x9C254f… +
+"rolling 24-hour" shown).**
 
 **Tagline:** An AI agent that can spend — but only what the chain allows.
 
