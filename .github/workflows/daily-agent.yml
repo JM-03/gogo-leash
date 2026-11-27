@@ -58,6 +58,11 @@ jobs:
 
       - name: Install Foundry (forge) — the red-team suite runs 5 local Foundry cases
         uses: foundry-rs/foundry-toolchain@v1
+        # The Foundry release download sometimes 504s on GitHub's side; the
+        # red-team suite skips the 5 local cases when forge is missing and
+        # still proves the 6 live attacks, so a download failure must not
+        # kill the whole run.
+        continue-on-error: true
 
       - name: Red-team suite (read-only, no keys, no gas)
         run: node scripts/redteam.mjs
