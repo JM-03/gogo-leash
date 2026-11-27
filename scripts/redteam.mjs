@@ -22,18 +22,20 @@
 //  10. Unregistered guardian key    -> GuardianKeyNotRegistered
 //  11. Unproven guardian key        -> GuardianKeyNotProven
 //
-// Known limitation (honest, not hidden): the daily cap is a UTC calendar-day
-// bucket, so 3 QOR at 23:59 + 3 QOR at 00:01 would pass. Vault v2 replaces it
-// with a rolling 24h window + a tripwire auto-pause. See REDTEAM.md.
+// Known limitation (honest, not hidden): vault v1's daily cap was a UTC
+// calendar-day bucket, so 3 QOR at 23:59 + 3 QOR at 00:01 would pass. This
+// suite now runs against vault v2, where the cap is a rolling 24-hour
+// window (see REDTEAM.md). The tripwire auto-pause is proven in Forge +
+// Node tests and the watcher code; a live on-chain trip demo has not run yet.
 
 import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 
 const RPC = 'https://evm-testnet.qore.host';
-const VAULT = '0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4';
+const VAULT = '0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f'; // vault v2 (rolling 24h window + tripwire)
 const GAS_WALLET = '0x0d95bE136395430Af3BF55Ea702623608B3524FD'; // allowlisted vendor
 const UNAPPROVED = '0x1111111111111111111111111111111111111111'; // never allowlisted
-const REPLAY_TX = '0xc45070e7a9081c30653d6558cb689f133e6b6126e90bbe8702e9d6878fb04ab4'; // real 0.5 QOR withdrawal
+const REPLAY_TX = '0xe5e33881dbe9b183505d6b4b31f5d480264a33d9ab5a335b4ab47f8b0b08e45b'; // real v2 0.8 QOR withdrawal, nonce 0
 
 const ERR = {
   BadPqcSignature: '0xf35e1976',
@@ -77,9 +79,13 @@ async function ethCall(from, to, data) {
 
 const results = [];
 function record(id, name, expected, got) {
-  const pass = got.reverted && got.data.startsWith(expected.toLowerCase());
-  results.push({ id, name, expected, got: got.reverted ? got.data.slice(0, 10) : 'NO REVERT (' + got.result + ')', blocked: pass });
-  console.log(`${pass ? 'BLOCKED' : '!! NOT BLOCKED'}  ${id}. ${name}\n    expected ${expected}, got ${results.at(-1).got}`);
+  // expected may be one selector or a list: the replay (case 4) is refused
+  // as OverDailyCap while the rolling window is nearly full, and as
+  // BadPqcSignature once it slides — either way the replay cannot pay.
+  const expectedList = Array.isArray(expected) ? expected : [expected];
+  const pass = got.reverted && expectedList.some((e) => got.data.startsWith(e.toLowerCase()));
+  results.push({ id, name, expected: expectedList.join(' or '), got: got.reverted ? got.data.slice(0, 10) : 'NO REVERT (' + got.result + ')', blocked: pass });
+  console.log(`${pass ? 'BLOCKED' : '!! NOT BLOCKED'}  ${id}. ${name}\n    expected ${expectedList.join(' or ')}, got ${results.at(-1).got}`);
 }
 
 // --- live vault state, for context ---
@@ -87,7 +93,7 @@ const bal = await rpc('eth_getBalance', [VAULT, 'latest']);
 const nonce = await rpc('eth_call', [{ to: VAULT, data: '0xaffed0e0' }, 'latest']);
 const spent = await rpc('eth_call', [{ to: VAULT, data: '0xa37d07e9' }, 'latest']);
 console.log(`Vault ${VAULT}`);
-console.log(`  balance ${Number(BigInt(bal.result)) / 1e18} QOR, nonce ${BigInt(nonce.result)}, spent today ${Number(BigInt(spent.result)) / 1e18} QOR of 3 QOR\n`);
+console.log(`  balance ${Number(BigInt(bal.result)) / 1e18} QOR, nonce ${BigInt(nonce.result)}, spent in rolling 24h window ${Number(BigInt(spent.result)) / 1e18} QOR of 3 QOR\n`);
 
 // 1. Forged PQ signature: 4,627 random bytes, 0.5 QOR to the allowlisted vendor.
 const forged = new Uint8Array(4627);
@@ -106,11 +112,14 @@ record(3, 'Over per-payment cap (2 QOR, cap is 1 QOR)',
   ERR.OverPerTxCap,
   await ethCall(undefined, VAULT, buildWithdrawCalldata(GAS_WALLET, 2000000000000000000n, forged)));
 
-// 4. Replay: the exact calldata of the real 0.5 QOR withdrawal, sent again.
-//    The signature binds the nonce, and the nonce has moved on.
+// 4. Replay: the exact calldata of the real v2 0.8 QOR withdrawal, sent again.
+//    The signature binds the nonce, and the nonce has moved on — but v2 checks
+//    the rolling-window cap BEFORE the signature, so while the window holds
+//    2.3 QOR this replay is refused as OverDailyCap (2.3 + 0.8 > 3), and once
+//    the window slides it is refused as BadPqcSignature. Either way it cannot pay.
 const replayTx = await rpc('eth_getTransactionByHash', [REPLAY_TX]);
 record(4, `Replay of real withdrawal ${REPLAY_TX.slice(0, 12)}… (nonce already spent)`,
-  ERR.BadPqcSignature,
+  [ERR.BadPqcSignature, ERR.OverDailyCap],
   await ethCall(undefined, VAULT, replayTx.result.input));
 
 // 5. Rule change by a non-guardian: the agent/vendor key tries to allowlist an address.
