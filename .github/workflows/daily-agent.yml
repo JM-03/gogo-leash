@@ -44,7 +44,7 @@ jobs:
           chmod 600 ~/.config/gogo-leash/owner.env
           printf 'AGENT_ED25519_KEY=%s\nGAS_MNEMONIC="%s"\n' "$AGENT_ED25519_KEY" "$GAS_MNEMONIC" > ~/.config/gogo-leash/agent.env
           chmod 600 ~/.config/gogo-leash/agent.env
-          printf 'PRIVATE_KEY=%s\nVAULT_ADDRESS=%s\n' "$PRIVATE_KEY" "$VAULT_ADDRESS" > .env
+          printf 'QORE_MNEMONIC="%s"\nPRIVATE_KEY=%s\nVAULT_ADDRESS=%s\n' "$OWNER_MNEMONIC" "$PRIVATE_KEY" "$VAULT_ADDRESS" > .env
           chmod 600 .env
 
       - name: Link the agent (1 QOR/tx, 3 QOR/day, 24 h)
