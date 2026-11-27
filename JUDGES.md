@@ -31,6 +31,10 @@ node agent/leash.mjs propose   # scores 5 desk proposals, refuses 2 (stranger, d
   classical key but a forged ML-DSA-87 signature is refused by the vault
   (`BadPqcSignature`), live and free via simulation; the real refusal tx is
   in `CHAIN_NOTES.md`.
+- Red-team score: **11/11 attacks blocked** — 6 live against the vault + 5 in
+  Forge tests; see `REDTEAM.md`, or run it yourself (read-only, no keys, no
+  gas): `node scripts/redteam.mjs`. Try the attacks in the browser:
+  https://jm-03.github.io/gogo-leash/lab/
 - Kill switch: `node agent/leash.mjs revoke` then `pay` → refused by the
   chain (`linked key is unbound or revoked`).
 

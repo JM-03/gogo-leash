@@ -35,6 +35,7 @@ unless the chain says so**:
 | **Agent link** | 1 QOR/payment, 3 QOR/day, 24h, tier `pqc` hybrid-verified — tx `9C1A4B49C83E3DCD1B9299025A7C5410C831041D1DA0E6C67614CF9770495938` |
 | **Payments paid** | 0.8 / 0.5 / 1.0 QOR — txs `F96612BECA02D6337A4E53488DD5699C3E1336783CF743905327B68E3F3091B6`, `CC6672ABB4B8A9F7A994514A51029C6F889F7A5E46E857C6C38FDBE6CC00D7B2`, `1B08400B39C3F2FECF77B3541C449BE16A913D2B28E0F96A028DC26257C2AC56` |
 | **Q-Day drill** | forged PQ signature refused (`BadPqcSignature`); real 0.5 QOR withdrawal paid — tx [`0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea`](https://explore.qore.network/tx/A534F1AAD2CC61B17ACF62626F3035F71CC0296EBFA80372EDC6352B5140FABF) |
+| **Red-team** | **11/11 attacks blocked** against the live vault — forged signature, unapproved payee, over-cap, replay, stolen agent key (live) + daily cap, kill switch, unregistered/unproven key (Forge) — see [REDTEAM.md](REDTEAM.md) |
 
 ## The Q-Day drill (the demo)
 
