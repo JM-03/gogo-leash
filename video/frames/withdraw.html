@@ -1,0 +1,17 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1280px; height: 720px; background: #0b1220; color: #d7e3f4;
+    font-family: "DejaVu Sans Mono", "JetBrains Mono", ui-monospace, monospace;
+    display: flex; flex-direction: column; justify-content: center; padding: 36px 56px; }
+  .cmd { color: #7dd3a8; font-size: 20px; margin-bottom: 14px; }
+  pre { font-size: 16px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+  .ok { color: #7dd3a8; } .bad { color: #f0887a; } .dim { color: #8b9bb4; }
+  h1 { font-size: 56px; color: #f5f7fa; line-height: 1.15; margin-bottom: 20px; }
+  h2 { font-size: 26px; color: #9fd8b8; font-weight: normal; line-height: 1.5; }
+  .addr { font-size: 20px; color: #d7e3f4; line-height: 1.9; }
+  .addr b { color: #9fd8b8; font-weight: normal; }
+  .foot { margin-top: 28px; font-size: 19px; color: #8b9bb4; }
+</style></head><body><div class="cmd">$ node agent/vault.mjs withdraw 0x0d95bE… 0.5</div><pre>guardian signs withdrawal #1: 0.5 QOR to 0x0d95bE136395430Af3BF55Ea702623608B3524FD
+  message 157 bytes, ML-DSA-87 signature 4627 bytes
+  <span class="ok">WITHDRAWN</span>  tx 0xc45070e7a9081c30653d6558cb689f133e6b6126e90bbe8702e9d6878fb04ab4  gas 500000
+  https://explore.qore.network/tx/c45070e7a9081c30653d6558cb689f133e6b6126e90bbe8702e9d6878fb04ab4</pre></body></html>
