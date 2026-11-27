@@ -121,8 +121,8 @@
   <section>
     <h2 class="sec">What the real guardian withdrawal looked like</h2>
     <p>A withdrawal signed with the guardian's real ML-DSA-87 key <b>pays</b>. Same contract, same function — only the signature is different.</p>
-    <div class="row"><span class="k">Real withdrawal, 0.5 QOR</span><span class="v"><a href="https://explore.qore.network/tx/0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea">0x19b2208b…e6fea</a> · PAID</span></div>
-    <div class="row"><span class="k">Second withdrawal, 0.5 QOR</span><span class="v"><a href="https://explore.qore.network/tx/0xc45070e7a9081c30653d6558cb689f133e6b6126e90bbe8702e9d6878fb04ab4">0xc45070e7…b04ab4</a> · PAID</span></div>
+    <div class="row"><span class="k">Real withdrawal, 0.5 QOR</span><span class="v"><a href="https://explore.qore.network/tx/19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea">0x19b2208b…e6fea</a> · PAID</span></div>
+    <div class="row"><span class="k">Second withdrawal, 0.5 QOR</span><span class="v"><a href="https://explore.qore.network/tx/c45070e7a9081c30653d6558cb689f133e6b6126e90bbe8702e9d6878fb04ab4">0xc45070e7…b04ab4</a> · PAID</span></div>
     <div class="row"><span class="k">Agent payments (hybrid ML-DSA-87)</span><span class="v">0.8 / 0.5 / 1.0 QOR — <a href="https://github.com/JM-03/gogo-leash/blob/main/CHAIN_NOTES.md">txs in CHAIN_NOTES.md</a></span></div>
     <p class="muted" style="margin-bottom:0">Why is there no "pay for real" button? A live payment needs a fresh, valid signature — and if it were printed on this page, anyone could submit it and drain the vault. So the "it pays" side is proven with the signature the guardian already used (verified above) and the receipt of the payment it made (checked above).</p>
   </section>
@@ -264,7 +264,7 @@ document.getElementById('verify-sig').addEventListener('click', async () => {
     const ok = BigInt(v.result) === 1n;
     res.className = 'result ' + (ok ? 'ok' : 'error');
     res.innerHTML = `<h3>${ok ? '✅ VERIFIED — this signature is the guardian\u2019s' : '❌ NOT verified'}</h3>
-      <p>The <code>pqcVerify</code> precompile checked the guardian's registered ML-DSA-87 key (2,592 bytes, read live from the chain) against the signature from the real withdrawal <a href="https://explore.qore.network/tx/${REAL_TX}">${REAL_TX.slice(0, 12)}…</a> and the message it signed (0.5 QOR to ${VICTIM.slice(0, 8)}…, nonce 0). Answer: <b>${ok ? 'valid' : 'invalid'}</b>.</p>
+      <p>The <code>pqcVerify</code> precompile checked the guardian's registered ML-DSA-87 key (2,592 bytes, read live from the chain) against the signature from the real withdrawal <a href="https://explore.qore.network/tx/${REAL_TX.slice(2)}">${REAL_TX.slice(0, 12)}…</a> and the message it signed (0.5 QOR to ${VICTIM.slice(0, 8)}…, nonce 0). Answer: <b>${ok ? 'valid' : 'invalid'}</b>.</p>
       <p class="muted">Same precompile, same message — the only difference from the attack above is whose key signed it. A random key says no; the guardian's key says yes.</p>`;
   } catch (e) {
     res.className = 'result error';
@@ -284,7 +284,7 @@ document.getElementById('verify-pay').addEventListener('click', async () => {
     const block = rc.result ? parseInt(rc.result.blockNumber, 16).toLocaleString() : '—';
     res.className = 'result ' + (ok ? 'ok' : 'error');
     res.innerHTML = `<h3>${ok ? '✅ PAID — the chain accepted it' : '❌ Not successful'}</h3>
-      <p>Receipt of <a href="https://explore.qore.network/tx/${REAL_TX2}">${REAL_TX2.slice(0, 12)}…</a>: status <b>${ok ? 'success (0x1)' : rc.result.status}</b>, block ${block}. The vault paid 0.5 QOR to the allowlisted vendor — the same function, the same vault, a real signature.</p>
+      <p>Receipt of <a href="https://explore.qore.network/tx/${REAL_TX2.slice(2)}">${REAL_TX2.slice(0, 12)}…</a>: status <b>${ok ? 'success (0x1)' : rc.result.status}</b>, block ${block}. The vault paid 0.5 QOR to the allowlisted vendor — the same function, the same vault, a real signature.</p>
       <p class="muted">This is the "does not reject" side: same <code>withdraw</code>, real ML-DSA-87 signature, money moved.</p>`;
   } catch (e) {
     res.className = 'result error';
