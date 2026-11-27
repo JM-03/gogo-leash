@@ -17,7 +17,9 @@ proof that Gogo Leash is a live system, not a one-off demo.
 3. **Vault status** — prints the live v2 vault state (balance, caps,
    spent in the rolling 24 h window, kill switch, tripwire).
 4. **Red-team suite** — re-runs the 11 attack checks against the live
-   vault (read-only, no keys, no gas).
+   vault (read-only, no keys, no gas). If forge cannot be installed on
+   the runner, the 5 local Foundry cases are skipped and the run scores
+   the 6 live attacks (they stay proven in the repo, 31/31 Forge).
 5. **Tripwire watch** — one scan for reverted withdrawals; if 3 land
    inside an hour it trips the vault itself. A small EVM window is opened
    first so a real trip can land.
