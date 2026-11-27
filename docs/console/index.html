@@ -61,7 +61,7 @@
 </div>
 <script>
 const RPC = 'https://evm-testnet.qore.host/';
-const VAULT = '0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4';
+const VAULT = '0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f'; // vault v2 (rolling 24h window + tripwire)
 const OWNER_EVM = '0x7976B342501928c2b5E8f9cd70f596bfF19555f9';
 const GAS_EVM = '0x0d95bE136395430Af3BF55Ea702623608B3524FD';
 const EXPLORER_TX = 'https://explore.qore.network/tx/';
@@ -89,11 +89,11 @@ const PAID = [
   { qor:'0.5', tx:'CC6672ABB4B8A9F7A994514A51029C6F889F7A5E46E857C6C38FDBE6CC00D7B2' },
   { qor:'1.0', tx:'1B08400B39C3F2FECF77B3541C449BE16A913D2B28E0F96A028DC26257C2AC56' },
 ];
-const DRILL_TX = '0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea';
-const DRILL_TX2 = '0xc45070e7a9081c30653d6558cb689f133e6b6126e90bbe8702e9d6878fb04ab4';
+const DRILL_TX = '0xe5e33881dbe9b183505d6b4b31f5d480264a33d9ab5a335b4ab47f8b0b08e45b'; // first v2 withdrawal, 0.8 QOR
+const DRILL_TX2 = '0x1251e86d902c2f903b53f7b6d0451a4f3c488ac309ae0d66458cd0fe4e1db2ed'; // second v2 withdrawal, 0.5 QOR
 // Native (Cosmos) records of the same two withdrawals — the explorer indexes these.
-const DRILL_TX_NATIVE = 'A534F1AAD2CC61B17ACF62626F3035F71CC0296EBFA80372EDC6352B5140FABF';
-const DRILL_TX2_NATIVE = '983EFFA35C4EF4BFEF9CC0C75F34105E7F2AAF1AE46F06308110F499B70E966D';
+const DRILL_TX_NATIVE = '6FD5D69E45DDFB8240DD2019A5BFC335607CF7BDF90DD7CC30A44BC585DD5AC4';
+const DRILL_TX2_NATIVE = '7C8664359A645B8D7E12495BBF9ED65BF192CEBE3D40623FDB4072798508A661';
 
 async function load() {
   let vs;
@@ -112,7 +112,7 @@ async function load() {
   const h = [];
   h.push('<div class="cards">');
   h.push(`<div class="card"><div class="label">Vault balance</div><div class="value">${fmtWei(vs.balance)} <small>QOR</small></div><div class="note">${vs.nonce} withdrawals so far</div></div>`);
-  h.push(`<div class="card"><div class="label">Spent today</div><div class="value">${vs.spent} <small>QOR</small></div><div class="note">of ${vs.daily} QOR daily cap</div></div>`);
+  h.push(`<div class="card"><div class="label">Spent in rolling 24h window</div><div class="value">${vs.spent} <small>QOR</small></div><div class="note">of ${vs.daily} QOR cap</div></div>`);
   h.push(`<div class="card"><div class="label">Per-payment cap</div><div class="value">${vs.perTx} <small>QOR</small></div><div class="note">enforced in the vault contract</div></div>`);
   h.push(`<div class="card"><div class="label">Kill switch</div><div class="value ${vs.paused ? 'bad' : 'ok'}">${vs.paused ? 'ON' : 'off'}</div><div class="note">${vs.paused ? 'withdrawals blocked' : 'guardian can pause in one tx'}</div></div>`);
   h.push('</div>');
@@ -136,8 +136,8 @@ async function load() {
   h.push('</section>');
   h.push('<section><h2>Q-Day drill</h2>');
   h.push(`<div class="row"><span class="k">Forged PQ signature</span><span class="v"><span class="pill green">BLOCKED</span> · <code>BadPqcSignature</code></span></div>`);
-  h.push(`<div class="row"><span class="k">Real guardian withdrawal, 0.5 QOR</span><span class="v"><a class="mono" href="${EXPLORER_TX}${DRILL_TX_NATIVE}">${short(DRILL_TX, 8)}</a></span></div>`);
-  h.push(`<div class="row"><span class="k">Second withdrawal, 0.5 QOR (video take)</span><span class="v"><a class="mono" href="${EXPLORER_TX}${DRILL_TX2_NATIVE}">${short(DRILL_TX2, 8)}</a></span></div>`);
+  h.push(`<div class="row"><span class="k">Real guardian withdrawal, 0.8 QOR</span><span class="v"><a class="mono" href="${EXPLORER_TX}${DRILL_TX_NATIVE}">${short(DRILL_TX, 8)}</a></span></div>`);
+  h.push(`<div class="row"><span class="k">Second withdrawal, 0.5 QOR</span><span class="v"><a class="mono" href="${EXPLORER_TX}${DRILL_TX2_NATIVE}">${short(DRILL_TX2, 8)}</a></span></div>`);
   h.push(`<p style="margin:.7rem 0 0"><a href="../lab/">Try it yourself in the attack lab →</a> — steal the classical key, forge a signature, watch the chain refuse it. No wallet, no gas.</p>`);
   h.push('</section>');
   document.getElementById('app').innerHTML = h.join('');
