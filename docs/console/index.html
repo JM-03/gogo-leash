@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gogo Leash — live treasury console</title>
+<style>
+  :root { --bg:#0b0f14; --panel:#121822; --line:#223042; --text:#e6edf3; --muted:#8b98a9; --green:#3fb950; --red:#f85149; --blue:#58a6ff; --violet:#bc8cff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  .wrap { max-width:960px; margin:0 auto; padding:1.5rem 1rem 3rem; }
+  header { display:flex; flex-wrap:wrap; align-items:baseline; gap:.5rem 1rem; }
+  h1 { font-size:1.5rem; margin:0; } h1 span { color:var(--violet); }
+  .sub { color:var(--muted); font-size:.9rem; margin:.4rem 0 1.25rem; }
+  .badge { display:inline-block; font-size:.72rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; padding:.18rem .5rem; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+  .badge.live { color:var(--green); border-color:var(--green); }
+  .badge.chain { color:var(--blue); border-color:var(--blue); }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.75rem; margin-bottom:1.25rem; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:.9rem 1rem; }
+  .card .label { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .card .value { font-size:1.45rem; font-weight:700; margin-top:.2rem; }
+  .card .value small { font-size:.85rem; color:var(--muted); font-weight:400; }
+  .card .note { font-size:.78rem; color:var(--muted); margin-top:.15rem; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:1rem 1.1rem; margin-bottom:1rem; }
+  h2 { font-size:.95rem; margin:0 0 .6rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .row { display:flex; justify-content:space-between; gap:1rem; padding:.42rem 0; border-bottom:1px solid var(--line); font-size:.92rem; }
+  .row:last-child { border-bottom:0; }
+  .row .k { color:var(--muted); } .row .v { text-align:right; word-break:break-all; }
+  .ok { color:var(--green); font-weight:600; } .bad { color:var(--red); font-weight:600; }
+  a { color:var(--blue); text-decoration:none; } a:hover { text-decoration:underline; }
+  code { font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:.85em; background:#0e141d; border:1px solid var(--line); padding:.1rem .35rem; border-radius:5px; }
+  table { width:100%; border-collapse:collapse; font-size:.86rem; }
+  th { text-align:left; color:var(--muted); font-weight:600; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; padding:.35rem .4rem; border-bottom:1px solid var(--line); }
+  td { padding:.45rem .4rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+  .pill { display:inline-block; font-size:.72rem; font-weight:700; padding:.12rem .45rem; border-radius:999px; }
+  .pill.green { background:rgba(63,185,80,.15); color:var(--green); }
+  .pill.red { background:rgba(248,81,73,.15); color:var(--red); }
+  .muted { color:var(--muted); } .mono { font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:.82rem; }
+  footer { color:var(--muted); font-size:.8rem; margin-top:1.5rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Gogo Leash <span>— live treasury console</span></h1>
+    <span class="badge live">● live on testnet</span>
+    <span class="badge chain">QoreChain · qorechain-diana · chain 9800</span>
+  </header>
+  <p class="sub">Post-quantum treasury guardian for an AI trading desk. Nothing moves unless the chain says so — ML-DSA-87 signature, allowlist, caps, kill switch. This page reads the vault straight from the public testnet RPC. No keys, no wallet, nothing is sent.</p>
+  <div id="app">Loading live vault state…</div>
+  <footer>
+    <a href="https://github.com/JM-03/gogo-leash">github.com/JM-03/gogo-leash</a> ·
+    <a href="../lab/">Try the attack lab →</a> ·
+    <a href="https://explore.qore.network">explore.qore.network</a> ·
+    <span id="updated"></span>
+  </footer>
+</div>
+<script>
+const RPC = 'https://evm-testnet.qore.host/';
+const VAULT = '0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4';
+const OWNER_EVM = '0x7976B342501928c2b5E8f9cd70f596bfF19555f9';
+const GAS_EVM = '0x0d95bE136395430Af3BF55Ea702623608B3524FD';
+const EXPLORER_TX = 'https://explore.qore.network/tx/';
+const EXPLORER_ADDR = 'https://explore.qore.network/address/';
+const SEL = { nonce:'0xaffed0e0', perTxCap:'0xad82cbea', dailyCap:'0xeb339391', spentToday:'0xa37d07e9', paused:'0x5c975abb', guardian:'0x452a9320' };
+const QOR = 10n ** 18n;
+const fmtWei = w => (Number(w) / 1e18).toLocaleString(undefined, { maximumFractionDigits: 6 });
+const short = (a, n=6) => a && a.length > 2*n+5 ? a.slice(0, n+2) + '…' + a.slice(-n) : a;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+
+async function rpc(method, params) {
+  const r = await fetch(RPC, { method:'POST', headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify({ jsonrpc:'2.0', id:1, method, params }) });
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message || JSON.stringify(j.error));
+  return j.result;
+}
+const call = data => rpc('eth_call', [{ to: VAULT, data }, 'latest']);
+const u256 = hex => BigInt(hex);
+const asBool = hex => BigInt(hex) !== 0n;
+const asAddr = hex => '0x' + hex.slice(-40);
+
+const PAID = [
+  { qor:'0.8', tx:'F96612BECA02D6337A4E53488DD5699C3E1336783CF743905327B68E3F3091B6' },
+  { qor:'0.5', tx:'CC6672ABB4B8A9F7A994514A51029C6F889F7A5E46E857C6C38FDBE6CC00D7B2' },
+  { qor:'1.0', tx:'1B08400B39C3F2FECF77B3541C449BE16A913D2B28E0F96A028DC26257C2AC56' },
+];
+const DRILL_TX = '0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea';
+const DRILL_TX2 = '0xc45070e7a9081c30653d6558cb689f133e6b6126e90bbe8702e9d6878fb04ab4';
+
+async function load() {
+  let vs;
+  try {
+    const [bal, nonce, perTx, daily, spent, paused, guardian] = await Promise.all([
+      rpc('eth_getBalance', [VAULT, 'latest']),
+      call(SEL.nonce), call(SEL.perTxCap), call(SEL.dailyCap),
+      call(SEL.spentToday), call(SEL.paused), call(SEL.guardian),
+    ]);
+    vs = { balance: u256(bal), nonce: u256(nonce).toString(), perTx: fmtWei(u256(perTx)),
+      daily: fmtWei(u256(daily)), spent: fmtWei(u256(spent)), paused: asBool(paused), guardian: asAddr(guardian) };
+  } catch (e) {
+    document.getElementById('app').innerHTML = `<section><p class="bad">Could not read the vault from the public RPC: ${esc(e.message)}</p><p class="muted">Check the vault directly: <a href="${EXPLORER_ADDR}${VAULT}">${short(VAULT)}</a></p></section>`;
+    return;
+  }
+  const h = [];
+  h.push('<div class="cards">');
+  h.push(`<div class="card"><div class="label">Vault balance</div><div class="value">${fmtWei(vs.balance)} <small>QOR</small></div><div class="note">${vs.nonce} withdrawals so far</div></div>`);
+  h.push(`<div class="card"><div class="label">Spent today</div><div class="value">${vs.spent} <small>QOR</small></div><div class="note">of ${vs.daily} QOR daily cap</div></div>`);
+  h.push(`<div class="card"><div class="label">Per-payment cap</div><div class="value">${vs.perTx} <small>QOR</small></div><div class="note">enforced in the vault contract</div></div>`);
+  h.push(`<div class="card"><div class="label">Kill switch</div><div class="value ${vs.paused ? 'bad' : 'ok'}">${vs.paused ? 'ON' : 'off'}</div><div class="note">${vs.paused ? 'withdrawals blocked' : 'guardian can pause in one tx'}</div></div>`);
+  h.push('</div>');
+  h.push('<section><h2>Vault</h2>');
+  h.push(`<div class="row"><span class="k">Address</span><span class="v mono"><a href="${EXPLORER_ADDR}${VAULT}">${VAULT}</a></span></div>`);
+  h.push(`<div class="row"><span class="k">Guardian (EVM)</span><span class="v mono">${vs.guardian}</span></div>`);
+  h.push(`<div class="row"><span class="k">Owner (native)</span><span class="v mono">qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr</span></div>`);
+  h.push('</section>');
+  h.push('<section><h2>Chain-enforced agent link</h2>');
+  h.push(`<div class="row"><span class="k">Rule</span><span class="v"><span class="pill green">on</span> · 1 QOR / payment · 3 QOR / day · 24 h · revocable</span></div>`);
+  h.push(`<div class="row"><span class="k">Registered</span><span class="v">tier <code>pqc</code>, hybrid ML-DSA-87 verified · <a class="mono" href="${EXPLORER_TX}9C1A4B49C83E3DCD1B9299025A7C5410C831041D1DA0E6C67614CF9770495938">9C1A4B49…</a></span></div>`);
+  h.push(`<div class="row"><span class="k">Expires</span><span class="v">28 Nov 2026, 18:19 WIB (link was live for the demo run)</span></div>`);
+  h.push('<p class="muted" style="font-size:.82rem;margin:.6rem 0 0">Link state lives on the native lane (authenticator spending rules). Browsers cannot fetch the Cosmos REST endpoint cross-origin, so it is shown here as a recorded fact — verify it at <a href="https://api-testnet.qore.host/cosmos/auth/v1beta1/accounts/qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr">api-testnet.qore.host</a>. The vault caps above are read live from the EVM lane.</p>');
+  h.push('</section>');
+  h.push('<section><h2>Agent payments — paid on chain</h2>');
+  h.push('<table><thead><tr><th>Amount</th><th>Transaction</th><th>Result</th></tr></thead><tbody>');
+  PAID.forEach(p => h.push(`<tr><td>${p.qor} QOR</td><td><a class="mono" href="${EXPLORER_TX}${p.tx}">0x${short(p.tx, 8)}</a></td><td><span class="pill green">PAID</span></td></tr>`));
+  h.push('</tbody></table>');
+  h.push('<p class="muted" style="font-size:.82rem">Two more payments were refused as designed: 5 QOR to a stranger (not allowlisted) and 0.9 QOR over the daily remainder.</p>');
+  h.push('</section>');
+  h.push('<section><h2>Q-Day drill</h2>');
+  h.push(`<div class="row"><span class="k">Forged PQ signature</span><span class="v"><span class="pill green">BLOCKED</span> · <code>BadPqcSignature</code></span></div>`);
+  h.push(`<div class="row"><span class="k">Real guardian withdrawal, 0.5 QOR</span><span class="v"><a class="mono" href="${EXPLORER_TX}${DRILL_TX}">${short(DRILL_TX, 8)}</a></span></div>`);
+  h.push(`<div class="row"><span class="k">Second withdrawal, 0.5 QOR (video take)</span><span class="v"><a class="mono" href="${EXPLORER_TX}${DRILL_TX2}">${short(DRILL_TX2, 8)}</a></span></div>`);
+  h.push(`<p style="margin:.7rem 0 0"><a href="../lab/">Try it yourself in the attack lab →</a> — steal the classical key, forge a signature, watch the chain refuse it. No wallet, no gas.</p>`);
+  h.push('</section>');
+  document.getElementById('app').innerHTML = h.join('');
+  document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString();
+}
+load(); setInterval(load, 30000);
+</script>
+</body>
+</html>
