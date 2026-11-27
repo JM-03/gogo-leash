@@ -7,7 +7,13 @@
 <style>
   :root { --bg:#0b0f14; --panel:#121822; --line:#223042; --text:#e6edf3; --muted:#8b98a9; --green:#3fb950; --red:#f85149; --blue:#58a6ff; --violet:#bc8cff; --amber:#d29922; }
   * { box-sizing:border-box; }
+  html, body { overflow-x:hidden; }
   body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  /* Grid/flex children must be allowed to shrink, or one long unbroken
+     string (a hash, a calldata blob) forces the whole page wider than
+     the phone and the browser zooms out — the bug Elgi caught. */
+  .duel > *, .stats > *, .row > * { min-width:0; }
+  code, a, .row .v, .result pre, .card p { overflow-wrap:anywhere; }
   .wrap { max-width:920px; margin:0 auto; padding:1.5rem 1rem 3rem; }
   header { margin-bottom:1.25rem; }
   h1 { font-size:1.6rem; margin:0; } h1 span { color:var(--violet); }
@@ -42,9 +48,11 @@
   p { font-size:.92rem; line-height:1.55; }
   a { color:var(--blue); text-decoration:none; } a:hover { text-decoration:underline; }
   code { font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:.85em; background:#0e141d; border:1px solid var(--line); padding:.1rem .35rem; border-radius:5px; }
-  pre { background:#0e141d; border:1px solid var(--line); border-radius:8px; padding:.8rem; overflow-x:auto; font-size:.8rem; line-height:1.5; margin:.6rem 0 0; white-space:pre-wrap; word-break:break-all; }
-  button { font:inherit; font-weight:700; cursor:pointer; border:0; border-radius:8px; padding:.75rem 1.1rem; width:100%; margin-top:.55rem; }
-  button:disabled { opacity:.55; cursor:wait; }
+  pre { background:#0e141d; border:1px solid var(--line); border-radius:8px; padding:.8rem; overflow-x:auto; font-size:.8rem; line-height:1.5; margin:.6rem 0 0; white-space:pre-wrap; word-break:break-all; overflow-wrap:anywhere; max-width:100%; }
+  button { font:inherit; font-weight:700; cursor:pointer; border:0; border-radius:8px; padding:.75rem 1.1rem; width:100%; margin-top:.55rem; white-space:normal; }
+  button:disabled { opacity:1; cursor:wait; }
+  button.attack-btn:disabled { background:#a82e28; color:#fff; }
+  button.guardian-btn:disabled { background:#2c7a35; color:#e6ffed; }
   button.attack-btn { background:var(--red); color:#fff; }
   button.attack-btn:hover:not(:disabled) { filter:brightness(1.12); }
   button.guardian-btn { background:var(--green); color:#04140a; }
