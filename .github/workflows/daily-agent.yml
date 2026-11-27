@@ -1,0 +1,68 @@
+# .github/workflows/daily-agent.yml — the agent runs itself, every day.
+#
+# What it proves: Gogo Leash is a live system, not a one-off demo. Each run
+# re-links the agent (1 QOR/tx, 3 QOR/day, 24 h), pays the READY proposals
+# (the vendor-signed invoice is verified before paying), and checks the
+# vault, the red-team suite and the tripwire. A green run is a fresh
+# on-chain proof; a red run is a visible alarm, not a hidden failure.
+#
+# Needs 4 repo secrets (Settings -> Secrets and variables -> Actions):
+#   GOGO_OWNER_MNEMONIC, GOGO_GAS_MNEMONIC, GOGO_AGENT_ED25519_KEY,
+#   GOGO_PRIVATE_KEY (owner EVM key, only used if the tripwire must trip)
+# All four are THROWAWAY diana-testnet-only keys. Never put a real key here.
+name: Daily live agent run
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # 09:00 WIB every day
+  workflow_dispatch: # run it by hand from the Actions tab
+
+jobs:
+  agent:
+    runs-on: ubuntu-latest
+    env:
+      VAULT_ADDRESS: 0x9C254f3bBAFa6d4C03196c8C65C0d30F2cD57B0f
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Write testnet keys (throwaway, testnet only)
+        env:
+          OWNER_MNEMONIC: ${{ secrets.GOGO_OWNER_MNEMONIC }}
+          GAS_MNEMONIC: ${{ secrets.GOGO_GAS_MNEMONIC }}
+          AGENT_ED25519_KEY: ${{ secrets.GOGO_AGENT_ED25519_KEY }}
+          PRIVATE_KEY: ${{ secrets.GOGO_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.config/gogo-leash
+          printf 'QORE_MNEMONIC="%s"\n' "$OWNER_MNEMONIC" > ~/.config/gogo-leash/owner.env
+          chmod 600 ~/.config/gogo-leash/owner.env
+          printf 'AGENT_ED25519_KEY=%s\nGAS_MNEMONIC="%s"\n' "$AGENT_ED25519_KEY" "$GAS_MNEMONIC" > ~/.config/gogo-leash/agent.env
+          chmod 600 ~/.config/gogo-leash/agent.env
+          printf 'PRIVATE_KEY=%s\nVAULT_ADDRESS=%s\n' "$PRIVATE_KEY" "$VAULT_ADDRESS" > .env
+          chmod 600 .env
+
+      - name: Link the agent (1 QOR/tx, 3 QOR/day, 24 h)
+        run: node agent/leash.mjs link 1 3 24
+
+      - name: Run the agent (pays READY proposals, skips the rest)
+        run: node agent/leash.mjs run
+
+      - name: Vault status
+        run: node agent/vault.mjs status
+
+      - name: Red-team suite (read-only, no keys, no gas)
+        run: node scripts/redteam.mjs
+
+      - name: Open a small EVM window (so a trip can land if one fires)
+        env:
+          QORE_WINDOW_TXS: "2"
+        run: node scripts/window.mjs open
+
+      - name: Tripwire watch (one scan)
+        run: node agent/tripwire.mjs watch --once
