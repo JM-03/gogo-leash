@@ -9,6 +9,51 @@ import { readAuditTail } from "../audit.mjs";
 import { loadPolicy, balanceOf, getJson, OWNER_ENV, AGENT_ENV, parseEnvFile, REST } from "../common.mjs";
 import { deriveUnifiedAccount } from "@qorechain/sdk";
 import { fetchSpendingRules, fetchAuthenticators } from "@qorechain/sdk";
+import { createPublicClient, defineChain, http, parseAbi, formatEther } from "viem";
+
+const diana = defineChain({
+  id: 9800,
+  name: "QoreChain Testnet",
+  nativeCurrency: { name: "QOR", symbol: "QOR", decimals: 18 },
+  rpcUrls: { default: { http: ["https://evm-testnet.qore.host"] } },
+});
+
+const vaultAbi = parseAbi([
+  "function guardian() view returns (address)",
+  "function nonce() view returns (uint256)",
+  "function perTxCap() view returns (uint256)",
+  "function dailyCap() view returns (uint256)",
+  "function paused() view returns (bool)",
+  "function spentTodayAmount() view returns (uint256)",
+]);
+
+async function vaultState(address) {
+  if (!address) return null;
+  try {
+    const pub = createPublicClient({ chain: diana, transport: http() });
+    const [bal, guardian, n, perTx, daily, spent, paused] = await Promise.all([
+      pub.getBalance({ address }),
+      pub.readContract({ address, abi: vaultAbi, functionName: "guardian" }),
+      pub.readContract({ address, abi: vaultAbi, functionName: "nonce" }),
+      pub.readContract({ address, abi: vaultAbi, functionName: "perTxCap" }),
+      pub.readContract({ address, abi: vaultAbi, functionName: "dailyCap" }),
+      pub.readContract({ address, abi: vaultAbi, functionName: "spentTodayAmount" }),
+      pub.readContract({ address, abi: vaultAbi, functionName: "paused" }),
+    ]);
+    return {
+      address,
+      balanceQor: formatEther(bal),
+      guardian,
+      withdrawals: n.toString(),
+      perTxQor: formatEther(perTx),
+      dailyQor: formatEther(daily),
+      spentTodayQor: formatEther(spent),
+      paused,
+    };
+  } catch (e) {
+    return { address, error: String(e?.message ?? e) };
+  }
+}
 
 const DIR = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.CONSOLE_PORT ?? 8787);
@@ -33,6 +78,7 @@ async function status() {
     out.error = String(e?.message ?? e);
   }
   out.vault = process.env.VAULT_ADDRESS || null;
+  out.vaultState = await vaultState(out.vault);
   return out;
 }
 

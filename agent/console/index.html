@@ -2,40 +2,159 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Gogo Leash — console</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gogo Leash — treasury console</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #111; }
-  h1 { font-size: 1.4rem; } h2 { font-size: 1.05rem; margin-top: 1.6rem; }
-  code, pre { background: #f4f4f4; padding: 0.15rem 0.35rem; border-radius: 4px; }
-  pre { padding: 0.8rem; overflow-x: auto; font-size: 0.8rem; }
-  .row { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 0.3rem 0; }
-  .ok { color: #0a7a2f; } .bad { color: #b00020; }
+  :root {
+    --bg: #0b0f14; --panel: #121822; --panel2: #0e141d; --line: #223042;
+    --text: #e6edf3; --muted: #8b98a9; --green: #3fb950; --red: #f85149;
+    --amber: #d29922; --blue: #58a6ff; --violet: #bc8cff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; margin-bottom: .25rem; }
+  h1 { font-size: 1.5rem; margin: 0; letter-spacing: -.01em; }
+  h1 span { color: var(--violet); }
+  .sub { color: var(--muted); font-size: .9rem; margin: 0 0 1.25rem; }
+  .badge { display: inline-block; font-size: .72rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; padding: .18rem .5rem; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .badge.live { color: var(--green); border-color: var(--green); }
+  .badge.chain { color: var(--blue); border-color: var(--blue); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem; margin-bottom: 1.25rem; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .9rem 1rem; }
+  .card .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .card .value { font-size: 1.45rem; font-weight: 700; margin-top: .2rem; }
+  .card .value small { font-size: .85rem; color: var(--muted); font-weight: 400; }
+  .card .note { font-size: .78rem; color: var(--muted); margin-top: .15rem; }
+  .banner { background: #3d1215; border: 1px solid var(--red); color: #ffb4ae; border-radius: 10px; padding: .8rem 1rem; margin-bottom: 1.25rem; font-weight: 600; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.1rem; margin-bottom: 1rem; }
+  h2 { font-size: .95rem; margin: 0 0 .6rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .row { display: flex; justify-content: space-between; gap: 1rem; padding: .42rem 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+  .row:last-child { border-bottom: 0; }
+  .row .k { color: var(--muted); }
+  .row .v { text-align: right; word-break: break-all; }
+  .ok { color: var(--green); font-weight: 600; }
+  .bad { color: var(--red); font-weight: 600; }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .85em; background: var(--panel2); border: 1px solid var(--line); padding: .1rem .35rem; border-radius: 5px; }
+  table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; padding: .35rem .4rem; border-bottom: 1px solid var(--line); }
+  td { padding: .45rem .4rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  .pill { display: inline-block; font-size: .72rem; font-weight: 700; padding: .12rem .45rem; border-radius: 999px; }
+  .pill.green { background: rgba(63,185,80,.15); color: var(--green); }
+  .pill.red { background: rgba(248,81,73,.15); color: var(--red); }
+  .pill.amber { background: rgba(210,153,34,.15); color: var(--amber); }
+  .pill.grey { background: rgba(139,152,169,.15); color: var(--muted); }
+  .muted { color: var(--muted); }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .82rem; }
+  footer { color: var(--muted); font-size: .8rem; margin-top: 1.5rem; }
+  footer a { color: var(--muted); }
 </style>
 </head>
 <body>
-<h1>Gogo Leash — treasury console</h1>
-<p>Post-quantum treasury guardian for an AI trading desk · QoreChain testnet <code>qorechain-diana</code> · testnet QOR only.</p>
-<div id="app">Loading…</div>
+<div class="wrap">
+  <header>
+    <h1>Gogo Leash <span>— treasury console</span></h1>
+    <span class="badge live" id="live-badge">● live</span>
+    <span class="badge chain">QoreChain testnet · qorechain-diana</span>
+  </header>
+  <p class="sub">Post-quantum treasury guardian for an AI trading desk. Nothing moves unless the chain says so — ML-DSA-87 signature, allowlist, caps, kill switch. Testnet QOR only.</p>
+  <div id="app">Loading…</div>
+  <footer>
+    <a href="https://github.com/JM-03/gogo-leash">github.com/JM-03/gogo-leash</a> ·
+    <a href="https://explore.qore.network">explore.qore.network</a> ·
+    refreshed every 15 s · <span id="updated"></span>
+  </footer>
+</div>
 <script>
+const EXPLORER_TX = 'https://explore.qore.network/tx/';
+const EXPLORER_ADDR = 'https://explore.qore.network/address/';
+const fmt = u => (Number(u) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' QOR';
+const short = (a, n = 6) => a && a.length > 2 * n + 5 ? a.slice(0, n + 2) + '…' + a.slice(-n) : a;
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const time = ts => { try { return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }); } catch { return ts; } };
+
+function pill(text, cls) { return `<span class="pill ${cls}">${esc(text)}</span>`; }
+
+function auditRow(e) {
+  const t = time(e.ts);
+  if (e.event === 'proposal.evaluated') {
+    const v = e.verdict === 'READY' ? pill('READY', 'green') : pill('SKIP', 'red');
+    return `<tr><td class="mono muted">${esc(t)}</td><td>Proposal</td><td>${esc(e.name)} · ${esc(e.qor)} QOR to <span class="mono">${short(e.to)}</span><br><span class="muted">${esc(e.leashReason || '')}</span></td><td>${v}</td></tr>`;
+  }
+  if (e.event === 'vault.withdraw') {
+    return `<tr><td class="mono muted">${esc(t)}</td><td>Vault withdrawal</td><td>${esc(e.qor)} QOR to <span class="mono">${short(e.to)}</span> · #${esc(e.nonce)}<br><a class="mono" href="${EXPLORER_TX}${esc(e.tx)}">${short(e.tx)}</a></td><td>${pill(e.status === 'success' ? 'PAID' : 'REVERTED', e.status === 'success' ? 'green' : 'red')}</td></tr>`;
+  }
+  if (e.event === 'vault.withdraw-refused') {
+    return `<tr><td class="mono muted">${esc(t)}</td><td>Vault withdrawal</td><td>${esc(e.qor)} QOR to <span class="mono">${short(e.to)}</span><br><span class="muted">${esc(e.reason || '')}</span></td><td>${pill('REFUSED', 'red')}</td></tr>`;
+  }
+  if (e.event === 'vault.drill-attack') {
+    return `<tr><td class="mono muted">${esc(t)}</td><td>Q-Day drill</td><td>Forged ML-DSA-87 signature, ${esc(e.qor)} QOR<br><span class="muted">${esc(e.reason || '')}</span></td><td>${e.result === 'BLOCKED' ? pill('BLOCKED', 'green') : pill('UNEXPECTED', 'red')}</td></tr>`;
+  }
+  if (e.event === 'agent.owner-init' || e.event === 'agent.init') {
+    return `<tr><td class="mono muted">${esc(t)}</td><td>Agent setup</td><td class="mono">${esc(e.owner || e.gasWallet || '')}</td><td>${pill('OK', 'grey')}</td></tr>`;
+  }
+  if (e.event && e.event.startsWith('vault.')) {
+    const tx = e.tx ? `<br><a class="mono" href="${EXPLORER_TX}${esc(e.tx)}">${short(e.tx)}</a>` : '';
+    return `<tr><td class="mono muted">${esc(t)}</td><td>${esc(e.event.replace('vault.', ''))}</td><td>${esc(JSON.stringify({ ...e, ts: undefined, event: undefined, tx: undefined }).replace(/^\{|\}$/g, ''))}${tx}</td><td>${pill('OK', 'grey')}</td></tr>`;
+  }
+  return `<tr><td class="mono muted">${esc(t)}</td><td>${esc(e.event || '')}</td><td class="mono">${esc(JSON.stringify(e))}</td><td>${pill('—', 'grey')}</td></tr>`;
+}
+
 async function load() {
-  const s = await (await fetch('/api/status')).json();
-  const fmt = u => (Number(u) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' QOR';
-  const rows = [];
-  rows.push('<h2>Leash policy (off-chain mirror — the contract and the chain link enforce it)</h2>');
-  rows.push(`<div class="row"><span>Kill switch</span><b class="${s.policy.killSwitch ? 'bad' : 'ok'}">${s.policy.killSwitch ? 'ON' : 'off'}</b></div>`);
-  rows.push(`<div class="row"><span>Per-payment cap</span><span>${fmt(s.policy.perTxUqor)}</span></div>`);
-  rows.push(`<div class="row"><span>Daily cap</span><span>${fmt(s.policy.dailyUqor)}</span></div>`);
-  rows.push(`<div class="row"><span>Allowlisted recipients</span><span>${s.policy.allowlist.length}</span></div>`);
-  rows.push('<h2>Accounts</h2>');
-  rows.push(`<div class="row"><span>Owner</span><span>${s.owner ? s.owner.address + ' · ' + fmt(s.owner.balanceUqor) : 'not initialised'}</span></div>`);
-  rows.push(`<div class="row"><span>Gas wallet</span><span>${s.gas ? s.gas.address + ' · ' + fmt(s.gas.balanceUqor) : 'not initialised'}</span></div>`);
-  rows.push(`<div class="row"><span>Vault</span><span>${s.vault || 'not deployed yet'}</span></div>`);
-  rows.push('<h2>Chain-enforced rules</h2>');
-  rows.push(s.rules.length ? s.rules.map(r => `<div class="row"><span>rule "${r.id}"</span><span>${r.enabled ? 'on' : 'off'} · ${fmt(r.perTxLimit)} / payment · ${fmt(r.dailyLimit)} / day</span></div>`).join('') : '<p>No rules on chain yet — run <code>node agent/leash.mjs link 1 3</code>.</p>');
-  rows.push('<h2>Audit log (latest first)</h2>');
-  rows.push(s.audit.length ? '<pre>' + s.audit.slice().reverse().map(e => JSON.stringify(e)).join('\n') + '</pre>' : '<p>No audit entries yet.</p>');
-  if (s.error) rows.push(`<p class="bad">Status error: ${s.error}</p>`);
-  document.getElementById('app').innerHTML = rows.join('');
+  let s;
+  try { s = await (await fetch('/api/status')).json(); }
+  catch (e) { document.getElementById('app').innerHTML = `<section><p class="bad">Could not reach the console server: ${esc(e.message)}</p></section>`; return; }
+  const vs = s.vaultState || {};
+  const h = [];
+  if (vs.paused) h.push(`<div class="banner">⛔ Kill switch is ON — the vault refuses all withdrawals.</div>`);
+  // Stat cards
+  h.push('<div class="cards">');
+  h.push(`<div class="card"><div class="label">Vault balance</div><div class="value">${vs.balanceQor ?? '—'} <small>QOR</small></div><div class="note">${vs.withdrawals != null ? esc(vs.withdrawals) + ' withdrawals so far' : 'vault not deployed yet'}</div></div>`);
+  h.push(`<div class="card"><div class="label">Spent today</div><div class="value">${vs.spentTodayQor ?? '—'} <small>QOR</small></div><div class="note">of ${vs.dailyQor ?? fmt(s.policy.dailyUqor)} daily cap</div></div>`);
+  h.push(`<div class="card"><div class="label">Per-payment cap</div><div class="value">${vs.perTxQor ?? fmt(s.policy.perTxUqor)} <small>QOR</small></div><div class="note">enforced in the vault contract</div></div>`);
+  h.push(`<div class="card"><div class="label">Kill switch</div><div class="value ${vs.paused ? 'bad' : 'ok'}">${vs.paused ? 'ON' : 'off'}</div><div class="note">${vs.paused ? 'withdrawals blocked' : 'guardian can pause in one tx'}</div></div>`);
+  h.push('</div>');
+  // Vault
+  h.push('<section><h2>Vault</h2>');
+  if (s.vault) {
+    h.push(`<div class="row"><span class="k">Address</span><span class="v mono"><a href="${EXPLORER_ADDR}${esc(s.vault)}">${esc(s.vault)}</a></span></div>`);
+    if (vs.guardian) h.push(`<div class="row"><span class="k">Guardian (EVM)</span><span class="v mono">${esc(vs.guardian)}</span></div>`);
+    if (vs.error) h.push(`<div class="row"><span class="k">Chain read</span><span class="v bad">${esc(vs.error)}</span></div>`);
+  } else {
+    h.push('<p class="muted">Not deployed yet — set <code>VAULT_ADDRESS</code> when starting the console.</p>');
+  }
+  h.push('</section>');
+  // Policy
+  h.push('<section><h2>Leash policy <span style="text-transform:none;letter-spacing:0">(off-chain mirror — the contract and the chain link enforce it)</span></h2>');
+  h.push(`<div class="row"><span class="k">Allowlisted recipients</span><span class="v">${s.policy.allowlist.length} · <span class="mono">${s.policy.allowlist.map(a => short(a)).join(', ') || '—'}</span></span></div>`);
+  h.push(`<div class="row"><span class="k">Per-payment cap</span><span class="v">${fmt(s.policy.perTxUqor)}</span></div>`);
+  h.push(`<div class="row"><span class="k">Daily cap</span><span class="v">${fmt(s.policy.dailyUqor)}</span></div>`);
+  h.push('</section>');
+  // Accounts
+  h.push('<section><h2>Accounts</h2>');
+  h.push(`<div class="row"><span class="k">Owner / guardian</span><span class="v">${s.owner ? `<span class="mono">${esc(s.owner.address)}</span> · ${fmt(s.owner.balanceUqor)}` : 'not initialised'}</span></div>`);
+  h.push(`<div class="row"><span class="k">Gas wallet</span><span class="v">${s.gas ? `<span class="mono">${esc(s.gas.address)}</span> · ${fmt(s.gas.balanceUqor)}` : 'not initialised'}</span></div>`);
+  h.push('</section>');
+  // Chain rules
+  h.push('<section><h2>Chain-enforced agent link</h2>');
+  if (s.rules.length) {
+    s.rules.forEach(r => h.push(`<div class="row"><span class="k">rule <code>${esc(r.id)}</code></span><span class="v">${r.enabled ? pill('on', 'green') : pill('off', 'grey')} · ${fmt(r.perTxLimit)} / payment · ${fmt(r.dailyLimit)} / day</span></div>`));
+  } else {
+    h.push('<p class="muted">No rules on chain yet — run <code>node agent/leash.mjs link 1 3</code>.</p>');
+  }
+  h.push('</section>');
+  // Audit
+  h.push('<section><h2>Audit log — latest first</h2>');
+  h.push(s.audit.length
+    ? `<div style="overflow-x:auto"><table><thead><tr><th>Time</th><th>Event</th><th>Detail</th><th>Result</th></tr></thead><tbody>${s.audit.slice().reverse().map(auditRow).join('')}</tbody></table></div>`
+    : '<p class="muted">No audit entries yet.</p>');
+  h.push('</section>');
+  if (s.error) h.push(`<section><p class="bad">Status error: ${esc(s.error)}</p></section>`);
+  document.getElementById('app').innerHTML = h.join('');
+  document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString();
 }
 load(); setInterval(load, 15000);
 </script>
