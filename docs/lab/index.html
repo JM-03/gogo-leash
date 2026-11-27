@@ -92,7 +92,7 @@ function buildWithdrawCalldata(to, amountWei, sigBytes) {
   const headLen = 3 * 32; // to, amount, offset
   const offset = hex(BigInt(headLen));
   const len = hex(BigInt(sigBytes.length));
-  const padded = sig + '0'.repeat((32 - (sigBytes.length % 32)) % 32);
+  const padded = sig + '0'.repeat(((32 - (sigBytes.length % 32)) % 32) * 2); // pad in hex chars: 2 per byte
   return '0x' + WITHDRAW_SEL + addr + amt + offset + len + padded;
 }
 
