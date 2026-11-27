@@ -103,7 +103,7 @@ async function load() {
     vs = { balance: u256(bal), nonce: u256(nonce).toString(), perTx: fmtWei(u256(perTx)),
       daily: fmtWei(u256(daily)), spent: fmtWei(u256(spent)), paused: asBool(paused), guardian: asAddr(guardian) };
   } catch (e) {
-    document.getElementById('app').innerHTML = `<section><p class="bad">Could not read the vault from the public RPC: ${esc(e.message)}</p><p class="muted">Check the vault directly: <a href="${EXPLORER_ADDR}${VAULT}">${short(VAULT)}</a></p></section>`;
+    document.getElementById('app').innerHTML = `<section><p class="bad">Could not read the vault from the public RPC: ${esc(e.message)}</p><p class="muted">Check the vault directly: <a href="${EXPLORER_ADDR}${VAULT.slice(2)}">${short(VAULT)}</a></p></section>`;
     return;
   }
   const h = [];
@@ -114,7 +114,7 @@ async function load() {
   h.push(`<div class="card"><div class="label">Kill switch</div><div class="value ${vs.paused ? 'bad' : 'ok'}">${vs.paused ? 'ON' : 'off'}</div><div class="note">${vs.paused ? 'withdrawals blocked' : 'guardian can pause in one tx'}</div></div>`);
   h.push('</div>');
   h.push('<section><h2>Vault</h2>');
-  h.push(`<div class="row"><span class="k">Address</span><span class="v mono"><a href="${EXPLORER_ADDR}${VAULT}">${VAULT}</a></span></div>`);
+  h.push(`<div class="row"><span class="k">Address</span><span class="v mono"><a href="${EXPLORER_ADDR}${VAULT.slice(2)}">${VAULT}</a></span></div>`);
   h.push(`<div class="row"><span class="k">Guardian (EVM)</span><span class="v mono">${vs.guardian}</span></div>`);
   h.push(`<div class="row"><span class="k">Owner (native)</span><span class="v mono">qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr</span></div>`);
   h.push('</section>');
@@ -132,8 +132,8 @@ async function load() {
   h.push('</section>');
   h.push('<section><h2>Q-Day drill</h2>');
   h.push(`<div class="row"><span class="k">Forged PQ signature</span><span class="v"><span class="pill green">BLOCKED</span> · <code>BadPqcSignature</code></span></div>`);
-  h.push(`<div class="row"><span class="k">Real guardian withdrawal, 0.5 QOR</span><span class="v"><a class="mono" href="${EXPLORER_TX}${DRILL_TX}">${short(DRILL_TX, 8)}</a></span></div>`);
-  h.push(`<div class="row"><span class="k">Second withdrawal, 0.5 QOR (video take)</span><span class="v"><a class="mono" href="${EXPLORER_TX}${DRILL_TX2}">${short(DRILL_TX2, 8)}</a></span></div>`);
+  h.push(`<div class="row"><span class="k">Real guardian withdrawal, 0.5 QOR</span><span class="v"><a class="mono" href="${EXPLORER_TX}${DRILL_TX.slice(2)}">${short(DRILL_TX, 8)}</a></span></div>`);
+  h.push(`<div class="row"><span class="k">Second withdrawal, 0.5 QOR (video take)</span><span class="v"><a class="mono" href="${EXPLORER_TX}${DRILL_TX2.slice(2)}">${short(DRILL_TX2, 8)}</a></span></div>`);
   h.push(`<p style="margin:.7rem 0 0"><a href="../lab/">Try it yourself in the attack lab →</a> — steal the classical key, forge a signature, watch the chain refuse it. No wallet, no gas.</p>`);
   h.push('</section>');
   document.getElementById('app').innerHTML = h.join('');
