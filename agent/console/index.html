@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gogo Leash — console</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #111; }
+  h1 { font-size: 1.4rem; } h2 { font-size: 1.05rem; margin-top: 1.6rem; }
+  code, pre { background: #f4f4f4; padding: 0.15rem 0.35rem; border-radius: 4px; }
+  pre { padding: 0.8rem; overflow-x: auto; font-size: 0.8rem; }
+  .row { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 0.3rem 0; }
+  .ok { color: #0a7a2f; } .bad { color: #b00020; }
+</style>
+</head>
+<body>
+<h1>Gogo Leash — treasury console</h1>
+<p>Post-quantum treasury guardian for an AI trading desk · QoreChain testnet <code>qorechain-diana</code> · testnet QOR only.</p>
+<div id="app">Loading…</div>
+<script>
+async function load() {
+  const s = await (await fetch('/api/status')).json();
+  const fmt = u => (Number(u) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 6 }) + ' QOR';
+  const rows = [];
+  rows.push('<h2>Leash policy (off-chain mirror — the contract and the chain link enforce it)</h2>');
+  rows.push(`<div class="row"><span>Kill switch</span><b class="${s.policy.killSwitch ? 'bad' : 'ok'}">${s.policy.killSwitch ? 'ON' : 'off'}</b></div>`);
+  rows.push(`<div class="row"><span>Per-payment cap</span><span>${fmt(s.policy.perTxUqor)}</span></div>`);
+  rows.push(`<div class="row"><span>Daily cap</span><span>${fmt(s.policy.dailyUqor)}</span></div>`);
+  rows.push(`<div class="row"><span>Allowlisted recipients</span><span>${s.policy.allowlist.length}</span></div>`);
+  rows.push('<h2>Accounts</h2>');
+  rows.push(`<div class="row"><span>Owner</span><span>${s.owner ? s.owner.address + ' · ' + fmt(s.owner.balanceUqor) : 'not initialised'}</span></div>`);
+  rows.push(`<div class="row"><span>Gas wallet</span><span>${s.gas ? s.gas.address + ' · ' + fmt(s.gas.balanceUqor) : 'not initialised'}</span></div>`);
+  rows.push(`<div class="row"><span>Vault</span><span>${s.vault || 'not deployed yet'}</span></div>`);
+  rows.push('<h2>Chain-enforced rules</h2>');
+  rows.push(s.rules.length ? s.rules.map(r => `<div class="row"><span>rule "${r.id}"</span><span>${r.enabled ? 'on' : 'off'} · ${fmt(r.perTxLimit)} / payment · ${fmt(r.dailyLimit)} / day</span></div>`).join('') : '<p>No rules on chain yet — run <code>node agent/leash.mjs link 1 3</code>.</p>');
+  rows.push('<h2>Audit log (latest first)</h2>');
+  rows.push(s.audit.length ? '<pre>' + s.audit.slice().reverse().map(e => JSON.stringify(e)).join('\n') + '</pre>' : '<p>No audit entries yet.</p>');
+  if (s.error) rows.push(`<p class="bad">Status error: ${s.error}</p>`);
+  document.getElementById('app').innerHTML = rows.join('');
+}
+load(); setInterval(load, 15000);
+</script>
+</body>
+</html>
