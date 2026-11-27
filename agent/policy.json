@@ -1,0 +1,9 @@
+{
+  "allowlist": [
+    "qor1pk2muymrj4ps4ual2h48qf3rvz9n2f8aulgluv"
+  ],
+  "comment": "Off-chain mirror of the on-chain leash. The vault contract and the authenticator link are the real enforcement; this file only lets the agent refuse early, before spending gas. The allowlisted address is the demo vendor (the agent gas wallet, controlled for this demo); in production it would be the real vendor addresses.",
+  "dailyQor": 3,
+  "killSwitch": false,
+  "perTxQor": 1
+}
