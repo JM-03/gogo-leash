@@ -1,8 +1,13 @@
 # Gogo Leash — a post-quantum treasury guardian for an AI trading desk
 
+[![Chain: QoreChain diana testnet](https://img.shields.io/badge/chain-QoreChain%20diana%20testnet-6b5ce7)](https://explore.qore.network)
+[![Tests: 11/11 Forge + 13/13 Node](https://img.shields.io/badge/tests-11%2F11%20Forge%20%2B%2013%2F13%20Node-green)](CHAIN_NOTES.md)
+[![Cost: $0 testnet](https://img.shields.io/badge/cost-%240%20testnet-blue)](CHAIN_NOTES.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **Track:** Post-Quantum AI Agents — QoreChain "Build Before Q-Day" developer fest
 **Builder:** Gogo Maduro (solo) · **Chain:** QoreChain testnet `qorechain-diana` only
-**Status:** in build — local tests pass, testnet deploy pending faucet funding
+**Status:** ✅ LIVE on testnet — vault deployed, 3 agent payments paid, Q-Day drill blocked a forged signature and a real guardian withdrawal paid
 
 An AI trading agent proposes payments and settlements, but **nothing moves
 unless the chain says so**:
@@ -19,18 +24,38 @@ unless the chain says so**:
 4. Every proposal, decision and transaction is written to an append-only
    **audit log** (`agent/audit.jsonl`).
 
+## Live on testnet (all verifiable on [explore.qore.network](https://explore.qore.network))
+
+| What | Address / tx |
+| --- | --- |
+| **Vault** | [`0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4`](https://explore.qore.network/address/0xC82274b045f7481C953f3DC0e88e9e54B308Dfd4) — 2 QOR deposit, 1.0 QOR left after 2 withdrawals |
+| **Owner / guardian** | `qor109mtxsjsry5v9d0gl8xhpavkhlce240edhxftr` (EVM `0x7976B342501928c2b5E8f9cd70f596bfF19555f9`) |
+| **Agent link** | 1 QOR/payment, 3 QOR/day, 24h, tier `pqc` hybrid-verified — tx `9C1A4B49C83E3DCD1B9299025A7C5410C831041D1DA0E6C67614CF9770495938` |
+| **Payments paid** | 0.8 / 0.5 / 1.0 QOR — txs `F96612BECA02D6337A4E53488DD5699C3E1336783CF743905327B68E3F3091B6`, `CC6672ABB4B8A9F7A994514A51029C6F889F7A5E46E857C6C38FDBE6CC00D7B2`, `1B08400B39C3F2FECF77B3541C449BE16A913D2B28E0F96A028DC26257C2AC56` |
+| **Q-Day drill** | forged PQ signature refused (`BadPqcSignature`); real 0.5 QOR withdrawal paid — tx [`0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea`](https://explore.qore.network/tx/0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea) |
+
 ## The Q-Day drill (the demo)
 
 `node agent/leash.mjs drill` plays the attacker who stole the classical key:
 
 - a vault withdrawal signed with a random ML-DSA-87 key is **refused on
-  chain** (`BadPqcSignature`) — shown live via `eth_call` and, after funding,
-  as a real testnet transaction;
+  chain** (`BadPqcSignature`) — verified live on testnet;
 - a payment attempted after the agent link is revoked is **refused**
-  (`linked key is unbound or revoked`).
+  (`linked key is unbound or revoked`);
+- a real guardian-signed withdrawal of 0.5 QOR **pays** (tx
+  `0x19b2208bbccd04233e40b29705ae6148243ba5a0349b56d583cbd62bc8ea6fea`).
 
 The point: when Q-Day comes — or a key leaks today — the most a compromised
 agent can lose is its daily limit, and one transaction stops it.
+
+## Try it in 2 minutes (no keys, no faucet)
+
+```bash
+# tools: node >= 22, npm or pnpm, foundry
+npm install            # or: pnpm install (via corepack: corepack enable && corepack prepare pnpm@latest --activate)
+npm run forge-std      # one-time: install forge-std
+npm test               # 13 Node tests + 11 Forge tests — green, no account needed
+```
 
 ## Layout
 
